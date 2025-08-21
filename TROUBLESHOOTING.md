@@ -6,6 +6,62 @@ This guide helps resolve common issues encountered while setting up and running 
 
 ### Frontend Build Errors
 
+#### Issue: Persistent npm Authentication Error (E401)
+```
+npm error code E401
+npm error Incorrect or missing password.
+```
+
+This often occurs on corporate machines or MacBooks with custom npm configurations.
+
+**Solution 1: Use Alternative Docker Configuration (Recommended)**
+```bash
+# Instead of the regular docker-compose, use the local version
+cd plottwist-workspace
+
+# Download the alternative docker-compose for auth issues
+curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.local.yml
+
+# Use the alternative configuration
+docker-compose -f docker-compose.fullstack.local.yml down -v
+docker-compose -f docker-compose.fullstack.local.yml build --no-cache
+docker-compose -f docker-compose.fullstack.local.yml up -d
+```
+
+**Solution 2: Check npm Configuration**
+```bash
+# Check current npm configuration
+npm config list
+
+# If you see corporate registries, reset to defaults
+npm config delete registry
+npm config delete always-auth
+npm config delete _authToken
+
+# Or create a project-specific .npmrc
+cd plottwist-frontend
+echo "registry=https://registry.npmjs.org/" > .npmrc
+echo "always-auth=false" >> .npmrc
+```
+
+**Solution 3: Use Local Development (Skip Docker)**
+```bash
+# For frontend
+cd plottwist-frontend
+npm install
+npm start
+
+# For backend (in another terminal)
+cd plottwist-backend
+python -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --reload
+
+# For database (in another terminal)
+docker run --name plottwist-postgres -e POSTGRES_DB=plottwist -e POSTGRES_USER=plottwist -e POSTGRES_PASSWORD=plottwist -p 5432:5432 -d postgres:15-alpine
+```
+
 #### Issue: Node.js Version Incompatibility
 ```
 npm warn EBADENGINE Unsupported engine {
@@ -25,31 +81,31 @@ docker-compose up -d
 
 The Dockerfile has been updated to use Node 20 which resolves this issue.
 
-#### Issue: npm Authentication Error
-```
-npm error code E401
-npm error Incorrect or missing password.
-```
+**Solution for Corporate/Restricted Environments:**
 
-**Solutions:**
+If you're on a corporate MacBook with restrictions:
 
-1. **Clear Docker build cache:**
+1. **Use the local alternative files:**
    ```bash
-   docker system prune -a
-   docker-compose build --no-cache
+   # Frontend only with alternative Dockerfile
+   cd plottwist-frontend
+   docker-compose -f docker-compose.local.yml up -d
    ```
 
-2. **If you have corporate npm settings, create `.npmrc` in frontend directory:**
+2. **Check for corporate npm proxy settings:**
    ```bash
-   cd plottwist-frontend
-   echo "registry=https://registry.npmjs.org/" > .npmrc
-   ```
-
-3. **Use local development instead of Docker:**
-   ```bash
-   cd plottwist-frontend
-   npm install
-   npm start
+   npm config get proxy
+   npm config get https-proxy
+   npm config get registry
+   
+   # If corporate settings exist, create override
+   cat > .npmrc << EOF
+   registry=https://registry.npmjs.org/
+   proxy=
+   https-proxy=
+   always-auth=false
+   strict-ssl=false
+   EOF
    ```
 
 ### Backend Build Errors
@@ -142,6 +198,22 @@ Add to your docker-compose environment:
 environment:
   - CHOKIDAR_USEPOLLING=true
   - WATCHPACK_POLLING=true
+```
+
+#### Issue: Corporate MacBook npm restrictions
+**Solution:**
+```bash
+# Check if you have corporate npm settings
+npm config list -l | grep registry
+
+# Create workspace-specific settings
+cd plottwist-workspace
+echo "registry=https://registry.npmjs.org/" > .npmrc
+echo "always-auth=false" >> .npmrc
+echo "strict-ssl=false" >> .npmrc
+
+# Use the local docker-compose configuration
+docker-compose -f docker-compose.fullstack.local.yml up -d
 ```
 
 ### Windows Issues
