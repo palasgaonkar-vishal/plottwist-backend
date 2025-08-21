@@ -6,76 +6,6 @@ This guide helps resolve common issues encountered while setting up and running 
 
 ### Frontend Build Errors
 
-#### Issue: Persistent npm Authentication Error (E401)
-```
-npm error code E401
-npm error Incorrect or missing password.
-```
-
-This often occurs on corporate machines or MacBooks with custom npm configurations.
-
-**Solution 1: Use Simplest Docker Configuration (Recommended for Corporate MacBooks)**
-```bash
-# Instead of the regular docker-compose, use the simplest version
-cd plottwist-workspace
-
-# Download the simplest docker-compose for auth issues
-curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.simple.yml
-
-# Use the simplest configuration (no npm config changes)
-docker-compose -f docker-compose.fullstack.simple.yml down -v
-docker-compose -f docker-compose.fullstack.simple.yml build --no-cache
-docker-compose -f docker-compose.fullstack.simple.yml up -d
-```
-
-**Solution 2: Use Alternative Docker Configuration**
-```bash
-# If the simple version doesn't work, try the alternative version
-cd plottwist-workspace
-
-# Download the alternative docker-compose for auth issues
-curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.local.yml
-
-# Use the alternative configuration
-docker-compose -f docker-compose.fullstack.local.yml down -v
-docker-compose -f docker-compose.fullstack.local.yml build --no-cache
-docker-compose -f docker-compose.fullstack.local.yml up -d
-```
-
-**Solution 3: Check npm Configuration**
-```bash
-# Check current npm configuration
-npm config list
-
-# If you see corporate registries, reset to defaults
-npm config delete registry
-npm config delete always-auth
-npm config delete _authToken
-
-# Or create a project-specific .npmrc
-cd plottwist-frontend
-echo "registry=https://registry.npmjs.org/" > .npmrc
-echo "always-auth=false" >> .npmrc
-```
-
-**Solution 4: Use Local Development (Skip Docker)**
-```bash
-# For frontend
-cd plottwist-frontend
-npm install
-npm start
-
-# For backend (in another terminal)
-cd plottwist-backend
-python -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app.main:app --reload
-
-# For database (in another terminal)
-docker run --name plottwist-postgres -e POSTGRES_DB=plottwist -e POSTGRES_USER=plottwist -e POSTGRES_PASSWORD=plottwist -p 5432:5432 -d postgres:15-alpine
-```
-
 #### Issue: Node.js Version Incompatibility
 ```
 npm warn EBADENGINE Unsupported engine {
@@ -86,41 +16,27 @@ npm warn EBADENGINE   current: { node: 'v18.20.8', npm: '10.8.2' }
 
 **Solution:**
 ```bash
-# Update your Docker images to use the latest versions
+# The project uses Node 16 with React 18.2 for maximum compatibility
 docker-compose down
-docker-compose pull
 docker-compose build --no-cache
 docker-compose up -d
 ```
 
-The Dockerfile has been updated to use Node 20 which resolves this issue.
+#### Issue: React Build Fails - Could not find index.html
+```
+Could not find a required file.
+  Name: index.html
+  Searched in: /app/public
+```
 
-**Solution for Corporate/Restricted Environments:**
+This occurs when the `public` folder is excluded from the Docker build context.
 
-If you're on a corporate MacBook with restrictions:
-
-1. **Use the local alternative files:**
-   ```bash
-   # Frontend only with alternative Dockerfile
-   cd plottwist-frontend
-   docker-compose -f docker-compose.local.yml up -d
-   ```
-
-2. **Check for corporate npm proxy settings:**
-   ```bash
-   npm config get proxy
-   npm config get https-proxy
-   npm config get registry
-   
-   # If corporate settings exist, create override
-   cat > .npmrc << EOF
-   registry=https://registry.npmjs.org/
-   proxy=
-   https-proxy=
-   always-auth=false
-   strict-ssl=false
-   EOF
-   ```
+**Solution:**
+```bash
+# This has been fixed in the latest version
+git pull origin main
+docker-compose build --no-cache frontend
+```
 
 ### Backend Build Errors
 
@@ -212,22 +128,6 @@ Add to your docker-compose environment:
 environment:
   - CHOKIDAR_USEPOLLING=true
   - WATCHPACK_POLLING=true
-```
-
-#### Issue: Corporate MacBook npm restrictions
-**Solution:**
-```bash
-# Check if you have corporate npm settings
-npm config list -l | grep registry
-
-# Create workspace-specific settings
-cd plottwist-workspace
-echo "registry=https://registry.npmjs.org/" > .npmrc
-echo "always-auth=false" >> .npmrc
-echo "strict-ssl=false" >> .npmrc
-
-# Use the local docker-compose configuration
-docker-compose -f docker-compose.fullstack.local.yml up -d
 ```
 
 ### Windows Issues

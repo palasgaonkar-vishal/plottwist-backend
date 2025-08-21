@@ -1,22 +1,19 @@
 # PlotTwist Development Setup Guide
 
-This guide provides different options for setting up the PlotTwist development environment depending on your needs.
+This guide will help you set up the PlotTwist development environment using Docker Compose.
 
 ## 🏗️ Project Structure
 
-The PlotTwist platform consists of two separate repositories:
-
-- **Backend**: [plottwist-backend](https://github.com/palasgaonkar-vishal/plottwist-backend) - FastAPI + PostgreSQL
-- **Frontend**: [plottwist-frontend](https://github.com/palasgaonkar-vishal/plottwist-frontend) - React + TypeScript + Material-UI
+PlotTwist consists of two main repositories:
+- **Backend**: [plottwist-backend](https://github.com/palasgaonkar-vishal/plottwist-backend) (Python FastAPI)
+- **Frontend**: [plottwist-frontend](https://github.com/palasgaonkar-vishal/plottwist-frontend) (React TypeScript)
 
 ## 🚀 Quick Start (Recommended)
 
 ### Full-Stack Development Setup
 
-For most development scenarios, you'll want both frontend and backend running:
-
 ```bash
-# 1. Create a workspace directory
+# 1. Create workspace directory
 mkdir plottwist-workspace
 cd plottwist-workspace
 
@@ -25,106 +22,85 @@ git clone git@github.com:palasgaonkar-vishal/plottwist-backend.git
 git clone git@github.com:palasgaonkar-vishal/plottwist-frontend.git
 
 # 3. Download the docker-compose configuration
-# Option 1: Stable version (RECOMMENDED - uses battle-tested dependencies)
-curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.stable.yml
+curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.yml
 curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/init-db.sql
 
 # 4. Start all services
-docker-compose -f docker-compose.fullstack.stable.yml up -d
+docker-compose -f docker-compose.fullstack.yml up -d
 
 # 5. Verify services are running
-docker-compose -f docker-compose.fullstack.stable.yml ps
-
-# Alternative options (if stable version has issues):
-# Option 2: Simple version
-# curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.simple.yml
-# docker-compose -f docker-compose.fullstack.simple.yml up -d
-
-# Option 3: No health checks version
-# curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.simple-no-health.yml
-# docker-compose -f docker-compose.fullstack.simple-no-health.yml up -d
+docker-compose -f docker-compose.fullstack.yml ps
 ```
 
 **Services will be available at:**
 - 🌐 **Frontend**: http://localhost:3000
 - 🔧 **Backend API**: http://localhost:8000
-- 📚 **API Docs**: http://localhost:8000/api/v1/docs
 - 🗄️ **Database**: localhost:5432
+- 📚 **API Documentation**: http://localhost:8000/api/v1/docs
 
 ## 🔧 Development Options
 
 ### Option 1: Backend-Only Development
 
-If you're working exclusively on backend features:
-
 ```bash
-git clone git@github.com:palasgaonkar-vishal/plottwist-backend.git
 cd plottwist-backend
 docker-compose -f docker-compose.dev.yml up -d
 ```
 
 ### Option 2: Frontend-Only Development
 
-If you're working exclusively on frontend features (requires backend running separately):
-
 ```bash
-git clone git@github.com:palasgaonkar-vishal/plottwist-frontend.git
 cd plottwist-frontend
-
-# Using Docker
 docker-compose -f docker-compose.dev.yml up -d
-
-# Or using npm
-npm install
-npm start
 ```
 
 ### Option 3: Local Development (No Docker)
 
-#### Backend Setup:
+**Prerequisites:** Python 3.11+, Node.js 16+, PostgreSQL
+
 ```bash
+# Backend setup
 cd plottwist-backend
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate  # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your PostgreSQL credentials
-
-# Run the application
 uvicorn app.main:app --reload
-```
 
-#### Frontend Setup:
-```bash
+# Frontend setup (in another terminal)
 cd plottwist-frontend
 npm install
 npm start
+
+# Database setup (in another terminal)
+# Install PostgreSQL locally and create database:
+createdb plottwist
+createdb plottwist_test
 ```
 
 ## 🧪 Testing
 
-### Backend Testing:
+### Backend Testing
+
 ```bash
 cd plottwist-backend
-source venv/bin/activate
-pytest --cov=app --cov-report=html
+docker-compose -f docker-compose.dev.yml up -d postgres  # Start database
+python -m pytest --cov=app --cov-report=html
 ```
 
-### Frontend Testing:
+### Frontend Testing
+
 ```bash
 cd plottwist-frontend
-npm test -- --coverage --watchAll=false
+npm test
 ```
 
 ## 🔄 Development Workflow
 
-1. **Make Changes**: Work on your feature in the appropriate repository
-2. **Test Locally**: Run tests to ensure your changes work
-3. **Commit**: Use descriptive commit messages
-4. **Push**: Push to your feature branch
-5. **Pull Request**: Create a PR for review
+1. **Start Services**: Use the full-stack docker-compose for complete development
+2. **Make Changes**: Edit code in either repository
+3. **Hot Reload**: Changes are automatically reflected (no restart needed)
+4. **Test**: Run tests locally before committing
+5. **Commit**: Push changes to respective repositories
 
 ## 📁 Workspace Structure
 
@@ -134,59 +110,46 @@ After setup, your workspace should look like:
 plottwist-workspace/
 ├── plottwist-backend/          # Backend repository
 ├── plottwist-frontend/         # Frontend repository
-├── docker-compose.fullstack.yml # Full-stack docker setup
+├── docker-compose.fullstack.yml  # Full-stack configuration
 └── init-db.sql                # Database initialization
 ```
 
 ## 🐛 Troubleshooting
 
-### Port Conflicts
-If you get port conflict errors:
-```bash
-# Check what's using the ports
-lsof -i :3000  # Frontend
-lsof -i :8000  # Backend
-lsof -i :5432  # Database
+If you encounter issues, check the [Troubleshooting Guide](https://github.com/palasgaonkar-vishal/plottwist-backend/blob/main/TROUBLESHOOTING.md).
 
-# Stop conflicting services or change ports in docker-compose.yml
-```
-
-### Database Issues
-```bash
-# Reset database volume
-docker-compose -f docker-compose.fullstack.yml down -v
-docker-compose -f docker-compose.fullstack.yml up -d
-```
-
-### Permission Issues
-```bash
-# Fix Docker permission issues (Linux/Mac)
-sudo chown -R $USER:$USER plottwist-workspace/
-```
+Common solutions:
+- **Port conflicts**: Check if ports 3000, 8000, or 5432 are in use
+- **Docker issues**: Run `docker-compose down -v` and rebuild with `--no-cache`
+- **Permission errors**: Ensure Docker has access to your file system
 
 ## 🤝 Contributing
 
-1. Fork both repositories you plan to work on
-2. Create feature branches (`git checkout -b feature/your-feature-name`)
-3. Make your changes with appropriate tests
-4. Ensure all tests pass
-5. Commit with descriptive messages
-6. Push to your fork
-7. Create Pull Requests
+1. Fork the repository you want to contribute to
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and test thoroughly
+4. Commit with clear message: `git commit -m "Add: your feature description"`
+5. Push and create a Pull Request
 
 ## 📚 Additional Resources
 
-- [Backend Documentation](https://github.com/palasgaonkar-vishal/plottwist-backend/blob/main/README.md)
-- [Frontend Documentation](https://github.com/palasgaonkar-vishal/plottwist-frontend/blob/main/README.md)
-- [Technical PRD](./technical.prd.md)
+- [Backend README](https://github.com/palasgaonkar-vishal/plottwist-backend/blob/main/README.md)
+- [Frontend README](https://github.com/palasgaonkar-vishal/plottwist-frontend/blob/main/README.md)
 - [Business PRD](./business.prd.md)
+- [Technical PRD](./technical.prd.md)
+- [Task Breakdown](./tasks/)
 
 ## 🆘 Need Help?
 
-If you encounter issues:
-1. Check the troubleshooting section above
-2. Review the individual repository READMEs
-3. Open an issue in the relevant repository
-4. Contact the development team
+If you're stuck:
+1. Check the troubleshooting guide
+2. Review the README files in each repository
+3. Create an issue in the relevant repository with:
+   - Your operating system
+   - Docker version
+   - Complete error logs
+   - Steps to reproduce
+
+---
 
 Happy coding! 🚀 
