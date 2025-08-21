@@ -19,17 +19,49 @@ FastAPI-based backend for the PlotTwist book review platform with AI-powered rec
 
 ## 🛠️ Development Setup
 
-### Using Docker Compose (Recommended)
+### Option 1: Backend-Only Development (Recommended for Backend Development)
 
-1. Clone the repository and navigate to the project root
-2. Start all services:
-   ```bash
-   docker-compose up -d
-   ```
-3. The backend will be available at `http://localhost:8000`
-4. API documentation at `http://localhost:8000/api/v1/docs`
+This setup runs only the backend and database, useful when working on backend features only:
 
-### Local Development
+```bash
+# Clone this repository
+git clone git@github.com:palasgaonkar-vishal/plottwist-backend.git
+cd plottwist-backend
+
+# Run backend with database
+docker-compose -f docker-compose.dev.yml up -d
+
+# The backend will be available at http://localhost:8000
+# API documentation at http://localhost:8000/api/v1/docs
+```
+
+### Option 2: Full-Stack Development
+
+For full-stack development, clone both repositories and use the full-stack setup:
+
+```bash
+# Create a workspace directory
+mkdir plottwist-workspace
+cd plottwist-workspace
+
+# Clone both repositories
+git clone git@github.com:palasgaonkar-vishal/plottwist-backend.git
+git clone git@github.com:palasgaonkar-vishal/plottwist-frontend.git
+
+# Download the full-stack docker-compose file
+curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.yml
+curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/init-db.sql
+
+# Start all services
+docker-compose -f docker-compose.fullstack.yml up -d
+
+# Services will be available at:
+# - Frontend: http://localhost:3000
+# - Backend: http://localhost:8000
+# - Database: localhost:5432
+```
+
+### Option 3: Local Development (Without Docker)
 
 1. Install dependencies:
    ```bash
@@ -109,6 +141,16 @@ app/
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT access token expiration | `60` |
 | `REFRESH_TOKEN_EXPIRE_DAYS` | JWT refresh token expiration | `30` |
 | `OPENAI_API_KEY` | OpenAI API key for recommendations | `None` |
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run tests (`pytest`)
+5. Commit your changes (`git commit -m 'Add some amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
 
 ## 🚀 Deployment
 
