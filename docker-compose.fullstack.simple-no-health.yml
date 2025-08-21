@@ -1,6 +1,6 @@
 version: '3.8'
 
-# Simplest PlotTwist development environment for corporate/restricted environments
+# Simplest PlotTwist development environment without health checks
 # This file assumes both plottwist-frontend and plottwist-backend repositories 
 # are cloned in the same parent directory
 
@@ -18,11 +18,6 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U plottwist -d plottwist"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
     networks:
       - plottwist-network
 
@@ -44,15 +39,8 @@ services:
       - ./plottwist-backend:/app
       - /app/__pycache__
     depends_on:
-      postgres:
-        condition: service_healthy
+      - postgres
     command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/api/v1/health"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 40s
     networks:
       - plottwist-network
 
@@ -74,16 +62,9 @@ services:
       - ./plottwist-frontend/public:/app/public
       - /app/node_modules
     depends_on:
-      backend:
-        condition: service_healthy
+      - backend
     stdin_open: true
     tty: true
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
-      interval: 45s
-      timeout: 15s
-      retries: 5
-      start_period: 120s
     networks:
       - plottwist-network
 
