@@ -14,9 +14,23 @@ npm error Incorrect or missing password.
 
 This often occurs on corporate machines or MacBooks with custom npm configurations.
 
-**Solution 1: Use Alternative Docker Configuration (Recommended)**
+**Solution 1: Use Simplest Docker Configuration (Recommended for Corporate MacBooks)**
 ```bash
-# Instead of the regular docker-compose, use the local version
+# Instead of the regular docker-compose, use the simplest version
+cd plottwist-workspace
+
+# Download the simplest docker-compose for auth issues
+curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.simple.yml
+
+# Use the simplest configuration (no npm config changes)
+docker-compose -f docker-compose.fullstack.simple.yml down -v
+docker-compose -f docker-compose.fullstack.simple.yml build --no-cache
+docker-compose -f docker-compose.fullstack.simple.yml up -d
+```
+
+**Solution 2: Use Alternative Docker Configuration**
+```bash
+# If the simple version doesn't work, try the alternative version
 cd plottwist-workspace
 
 # Download the alternative docker-compose for auth issues
@@ -28,7 +42,7 @@ docker-compose -f docker-compose.fullstack.local.yml build --no-cache
 docker-compose -f docker-compose.fullstack.local.yml up -d
 ```
 
-**Solution 2: Check npm Configuration**
+**Solution 3: Check npm Configuration**
 ```bash
 # Check current npm configuration
 npm config list
@@ -44,7 +58,7 @@ echo "registry=https://registry.npmjs.org/" > .npmrc
 echo "always-auth=false" >> .npmrc
 ```
 
-**Solution 3: Use Local Development (Skip Docker)**
+**Solution 4: Use Local Development (Skip Docker)**
 ```bash
 # For frontend
 cd plottwist-frontend
