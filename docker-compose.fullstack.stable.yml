@@ -1,0 +1,76 @@
+version: '3.8'
+
+# Stable PlotTwist development environment using react-scripts 4.0.3
+# This file assumes both plottwist-frontend and plottwist-backend repositories 
+# are cloned in the same parent directory
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    container_name: plottwist-postgres
+    environment:
+      POSTGRES_DB: plottwist
+      POSTGRES_USER: plottwist
+      POSTGRES_PASSWORD: plottwist
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+    networks:
+      - plottwist-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./plottwist-backend
+      dockerfile: Dockerfile
+    container_name: plottwist-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgresql://plottwist:plottwist@postgres:5432/plottwist
+      - TEST_DATABASE_URL=postgresql://plottwist:plottwist@postgres:5432/plottwist_test
+      - SECRET_KEY=dev-secret-key-change-in-production
+      - ENVIRONMENT=development
+      - DEBUG=true
+    volumes:
+      - ./plottwist-backend:/app
+      - /app/__pycache__
+    depends_on:
+      - postgres
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - plottwist-network
+
+  # Frontend React App (Using stable react-scripts 4.0.3)
+  frontend:
+    build:
+      context: ./plottwist-frontend
+      dockerfile: Dockerfile.stable
+    container_name: plottwist-frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+      - NODE_ENV=development
+    volumes:
+      - ./plottwist-frontend/src:/app/src
+      - ./plottwist-frontend/public:/app/public
+      - /app/node_modules
+    depends_on:
+      - backend
+    stdin_open: true
+    tty: true
+    networks:
+      - plottwist-network
+
+volumes:
+  postgres_data:
+
+networks:
+  plottwist-network:
+    driver: bridge 
