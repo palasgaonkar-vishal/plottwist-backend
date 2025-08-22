@@ -22,14 +22,14 @@ git clone git@github.com:palasgaonkar-vishal/plottwist-backend.git
 git clone git@github.com:palasgaonkar-vishal/plottwist-frontend.git
 
 # 3. Download the docker-compose configuration
-curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.yml
+curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.yml
 curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/init-db.sql
 
 # 4. Start all services
-docker-compose -f docker-compose.fullstack.yml up -d
+docker-compose up -d
 
 # 5. Verify services are running
-docker-compose -f docker-compose.fullstack.yml ps
+docker-compose ps
 ```
 
 **Services will be available at:**
@@ -110,7 +110,7 @@ After setup, your workspace should look like:
 plottwist-workspace/
 ├── plottwist-backend/          # Backend repository
 ├── plottwist-frontend/         # Frontend repository
-├── docker-compose.fullstack.yml  # Full-stack configuration
+├── docker-compose.yml             # Full-stack configuration
 └── init-db.sql                # Database initialization
 ```
 
