@@ -212,7 +212,7 @@ If you see this error when trying to register users, it means the database table
 - **Manual Fix**: If still having issues, restart the Docker containers: `docker-compose down && docker-compose up --build`
 
 ### Missing pytest-cov for Coverage Calculation
-- **Fixed**: `pytest-cov==4.2.1` is now included in `requirements.txt`
+- **Fixed**: `pytest-cov==2.12.1` is now included in `requirements.txt`
 - **Usage**: Run `pytest --cov=app --cov-report=term-missing` to calculate test coverage
 
 ## 📝 API Documentation
