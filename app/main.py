@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime
 
-from app.routers import auth_router, users_router
+from app.routers import auth_router, users_router, books_router
 from app.core.config import settings
 from app.database import create_tables
 
@@ -37,6 +37,7 @@ async def startup_event():
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(users_router, prefix=settings.API_V1_STR)
+app.include_router(books_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/", tags=["Root"])

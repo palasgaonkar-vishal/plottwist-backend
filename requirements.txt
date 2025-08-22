@@ -22,4 +22,5 @@ httpx==0.25.2
 
 # Utility dependencies
 python-decouple==3.8
-email-validator==2.1.0 
+email-validator==2.1.0
+requests==2.31.0 

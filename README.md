@@ -14,11 +14,15 @@ A FastAPI-based backend for the PlotTwist book review platform with JWT authenti
 ### ✅ Task 002: Database Models and Authentication
 - **Database Models**: User, Book, Genre, Review, Favorite models with proper relationships
 - **JWT Authentication**: Register, login, refresh, logout endpoints with secure token handling
+- **Book Management**: Complete CRUD operations for books with genre associations
+- **Open Library Integration**: Automated book data population from Open Library API
+- **Advanced Search**: Multi-criteria book search (title, author, genre, rating, year)
+- **Pagination Support**: Efficient pagination for large datasets (10 items per page)
 - **Password Security**: bcrypt hashing with salting
 - **Database Migrations**: Alembic setup for schema management
-- **Data Seeding**: Comprehensive seeding script with sample data
+- **Data Seeding**: Intelligent seeder with Open Library API integration (500+ books)
 - **Authentication Middleware**: Protected routes with role-based access
-- **Test Coverage**: 73% coverage with comprehensive unit tests
+- **Test Coverage**: 80% coverage with comprehensive unit tests
 
 ## 🏗️ Architecture
 
@@ -47,6 +51,18 @@ A FastAPI-based backend for the PlotTwist book review platform with JWT authenti
 - `POST /{user_id}/verify` - Verify user email
 - `POST /{user_id}/activate` - Activate user account
 
+#### Books (`/api/v1/books`)
+- `GET /` - List books with pagination and filters
+- `GET /search` - Search books by title, author, genre, rating, year
+- `GET /{book_id}` - Get specific book details
+- `POST /` - Create new book (authenticated)
+- `PUT /{book_id}` - Update existing book (authenticated)
+- `DELETE /{book_id}` - Delete book (authenticated)
+
+#### Genres (`/api/v1/books/genres`)
+- `GET /` - List all available genres
+- `GET /{genre_id}` - Get specific genre details
+
 ## 🧪 Testing
 
 Run the test suite with coverage:
@@ -55,13 +71,14 @@ Run the test suite with coverage:
 python -m pytest app/tests/ -v --cov=app --cov-report=term-missing
 ```
 
-Current test coverage: **73%**
+Current test coverage: **80%**
 
 Test categories:
 - **Models**: Database model validation, relationships, constraints
 - **Authentication**: JWT tokens, password hashing, security functions
-- **API Endpoints**: Authentication flow, user management
-- **Services**: Business logic testing
+- **API Endpoints**: Authentication, user management, book operations
+- **Services**: Business logic for auth, users, books, and genres
+- **Book Operations**: CRUD operations, search, filtering, pagination
 
 ## 🔧 Setup & Development
 

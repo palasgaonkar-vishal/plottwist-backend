@@ -39,18 +39,55 @@ def db_session() -> Generator[Session, None, None]:
 @pytest.fixture(scope="function")
 def client(db_session: Session) -> Generator[TestClient, None, None]:
     """Create a test client with database dependency override."""
+    from fastapi import FastAPI
+    from fastapi.middleware.cors import CORSMiddleware
+    from app.routers import auth_router, users_router, books_router
+    from app.core.config import settings
+    
+    # Create a test app without startup events
+    test_app = FastAPI(
+        title="PlotTwist API Test",
+        description="Test version of PlotTwist API",
+        version="1.0.0",
+        docs_url=f"{settings.API_V1_STR}/docs",
+        redoc_url=f"{settings.API_V1_STR}/redoc",
+    )
+    
+    test_app.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.BACKEND_CORS_ORIGINS,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Include routers
+    test_app.include_router(auth_router, prefix=settings.API_V1_STR)
+    test_app.include_router(users_router, prefix=settings.API_V1_STR)
+    test_app.include_router(books_router, prefix=settings.API_V1_STR)
+    
+    # Add basic routes
+    @test_app.get("/", tags=["Root"])
+    async def root():
+        return {"message": "Test PlotTwist API"}
+    
+    @test_app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
+    async def health_check():
+        return {"status": "healthy", "test": True}
+    
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
     
-    app.dependency_overrides[get_db] = override_get_db
+    test_app.dependency_overrides[get_db] = override_get_db
     
-    with TestClient(app) as test_client:
+    with TestClient(test_app) as test_client:
         yield test_client
     
-    app.dependency_overrides.clear()
+    # Clear dependency overrides
+    test_app.dependency_overrides.clear()
 
 
 @pytest.fixture
@@ -77,7 +114,7 @@ def sample_inactive_user(db_session: Session) -> User:
         name="Inactive User",
         hashed_password=get_password_hash("password123"),
         is_active=False,
-        is_verified=False,
+        is_verified=True,
     )
     db_session.add(user)
     db_session.commit()
@@ -89,8 +126,8 @@ def sample_inactive_user(db_session: Session) -> User:
 def sample_genre(db_session: Session) -> Genre:
     """Create a sample genre for testing."""
     genre = Genre(
-        name="Fiction",
-        description="Imaginative or invented stories",
+        name="Test Fiction",
+        description="A test fiction genre"
     )
     db_session.add(genre)
     db_session.commit()
@@ -99,19 +136,18 @@ def sample_genre(db_session: Session) -> Genre:
 
 
 @pytest.fixture
-def sample_book(db_session: Session, sample_genre: Genre) -> Book:
+def sample_book(db_session: Session) -> Book:
     """Create a sample book for testing."""
     book = Book(
-        title="Test Book",
+        title="Test Book Title",
         author="Test Author",
         description="A test book description",
         published_year=2023,
         isbn="9781234567890",
         cover_url="https://example.com/cover.jpg",
-        average_rating=0.0,
-        total_reviews=0,
+        average_rating=4.0,
+        total_reviews=5,
     )
-    book.genres.append(sample_genre)
     db_session.add(book)
     db_session.commit()
     db_session.refresh(book)
@@ -120,22 +156,50 @@ def sample_book(db_session: Session, sample_genre: Genre) -> Book:
 
 @pytest.fixture
 def multiple_users(db_session: Session) -> list[User]:
-    """Create multiple sample users for testing."""
-    users = []
-    for i in range(3):
-        user = User(
-            email=f"user{i}@example.com",
-            name=f"User {i}",
+    """Create multiple users for testing."""
+    users = [
+        User(
+            email="user1@example.com",
+            name="User One",
             hashed_password=get_password_hash("password123"),
             is_active=True,
-            is_verified=i % 2 == 0,  # Alternate verified status
-        )
+            is_verified=True,
+        ),
+        User(
+            email="user2@example.com",
+            name="User Two",
+            hashed_password=get_password_hash("password123"),
+            is_active=True,
+            is_verified=False,
+        ),
+        User(
+            email="user3@example.com",
+            name="User Three",
+            hashed_password=get_password_hash("password123"),
+            is_active=False,
+            is_verified=True,
+        ),
+        User(
+            email="user4@example.com",
+            name="User Four",
+            hashed_password=get_password_hash("password123"),
+            is_active=True,
+            is_verified=True,
+        ),
+        User(
+            email="user5@example.com",
+            name="User Five",
+            hashed_password=get_password_hash("password123"),
+            is_active=True,
+            is_verified=True,
+        ),
+    ]
+    
+    for user in users:
         db_session.add(user)
-        users.append(user)
     
     db_session.commit()
     
-    # Refresh all users
     for user in users:
         db_session.refresh(user)
     
@@ -144,22 +208,20 @@ def multiple_users(db_session: Session) -> list[User]:
 
 @pytest.fixture
 def multiple_genres(db_session: Session) -> list[Genre]:
-    """Create multiple sample genres for testing."""
-    genre_data = [
-        {"name": "Fiction", "description": "Imaginative stories"},
-        {"name": "Mystery", "description": "Puzzles and crimes"},
-        {"name": "Romance", "description": "Love stories"},
+    """Create multiple genres for testing."""
+    genres = [
+        Genre(name="Fiction", description="Fictional stories"),
+        Genre(name="Science Fiction", description="Science fiction stories"),
+        Genre(name="Mystery", description="Mystery and detective stories"),
+        Genre(name="Romance", description="Romance stories"),
+        Genre(name="Non-Fiction", description="Non-fictional content"),
     ]
     
-    genres = []
-    for data in genre_data:
-        genre = Genre(**data)
+    for genre in genres:
         db_session.add(genre)
-        genres.append(genre)
     
     db_session.commit()
     
-    # Refresh all genres
     for genre in genres:
         db_session.refresh(genre)
     
@@ -168,52 +230,71 @@ def multiple_genres(db_session: Session) -> list[Genre]:
 
 @pytest.fixture
 def multiple_books(db_session: Session, multiple_genres: list[Genre]) -> list[Book]:
-    """Create multiple sample books for testing."""
-    book_data = [
-        {
-            "title": "The Great Test",
-            "author": "Test Author 1",
-            "description": "A great test book",
-            "published_year": 2023,
-            "isbn": "9781111111111",
-            "genres": [multiple_genres[0], multiple_genres[1]],
-        },
-        {
-            "title": "Mystery of Testing",
-            "author": "Test Author 2",
-            "description": "A mysterious test book",
-            "published_year": 2022,
-            "isbn": "9782222222222",
-            "genres": [multiple_genres[1]],
-        },
-        {
-            "title": "Love in Testing",
-            "author": "Test Author 3",
-            "description": "A romantic test book",
-            "published_year": 2021,
-            "isbn": "9783333333333",
-            "genres": [multiple_genres[2]],
-        },
+    """Create multiple books for testing."""
+    books = [
+        Book(
+            title="Test Book One",
+            author="Author One",
+            description="First test book",
+            published_year=2022,
+            isbn="9781111111111",
+            cover_url="https://example.com/cover1.jpg",
+            average_rating=4.5,
+            total_reviews=10,
+        ),
+        Book(
+            title="Test Book Two",
+            author="Author Two",
+            description="Second test book",
+            published_year=2021,
+            isbn="9782222222222",
+            cover_url="https://example.com/cover2.jpg",
+            average_rating=3.8,
+            total_reviews=7,
+        ),
+        Book(
+            title="Test Book Three",
+            author="Author Three",
+            description="Third test book",
+            published_year=2023,
+            isbn="9783333333333",
+            cover_url="https://example.com/cover3.jpg",
+            average_rating=4.2,
+            total_reviews=12,
+        ),
+        Book(
+            title="Test Book Four",
+            author="Author Four",
+            description="Fourth test book",
+            published_year=2020,
+            isbn="9784444444444",
+            cover_url="https://example.com/cover4.jpg",
+            average_rating=3.5,
+            total_reviews=8,
+        ),
+        Book(
+            title="Test Book Five",
+            author="Author Five",
+            description="Fifth test book",
+            published_year=2024,
+            isbn="9785555555555",
+            cover_url="https://example.com/cover5.jpg",
+            average_rating=4.8,
+            total_reviews=15,
+        ),
     ]
     
-    books = []
-    for data in book_data:
-        book = Book(
-            title=data["title"],
-            author=data["author"],
-            description=data["description"],
-            published_year=data["published_year"],
-            isbn=data["isbn"],
-            average_rating=0.0,
-            total_reviews=0,
-        )
-        book.genres.extend(data["genres"])
+    for i, book in enumerate(books):
         db_session.add(book)
-        books.append(book)
+        db_session.flush()  # Get the book ID
+        
+        # Add genre associations (different genres for variety)
+        book.genres.append(multiple_genres[i % len(multiple_genres)])
+        if i % 2 == 0 and len(multiple_genres) > 1:
+            book.genres.append(multiple_genres[(i + 1) % len(multiple_genres)])
     
     db_session.commit()
     
-    # Refresh all books
     for book in books:
         db_session.refresh(book)
     
@@ -221,17 +302,27 @@ def multiple_books(db_session: Session, multiple_genres: list[Genre]) -> list[Bo
 
 
 @pytest.fixture
-def auth_headers(client: TestClient) -> dict:
-    """Create authentication headers for a test user."""
-    # Register a user
-    user_data = {
+def auth_headers(client: TestClient, db_session: Session) -> dict:
+    """Get authentication headers for API requests."""
+    # Create a user for authentication
+    user = User(
+        email="auth@example.com",
+        name="Auth User",
+        hashed_password=get_password_hash("password123"),
+        is_active=True,
+        is_verified=True,
+    )
+    db_session.add(user)
+    db_session.commit()
+    
+    # Login to get tokens
+    login_data = {
         "email": "auth@example.com",
-        "password": "password123",
-        "name": "Auth User"
+        "password": "password123"
     }
     
-    response = client.post("/api/v1/auth/register", json=user_data)
-    assert response.status_code == 201
+    response = client.post("/api/v1/auth/login", json=login_data)
+    assert response.status_code == 200
     
     tokens = response.json()["tokens"]
     access_token = tokens["access_token"]
@@ -241,8 +332,8 @@ def auth_headers(client: TestClient) -> dict:
 
 @pytest.fixture
 def verified_user_headers(client: TestClient, db_session: Session) -> dict:
-    """Create authentication headers for a verified test user."""
-    # Create a verified user directly in database
+    """Get authentication headers for a verified user."""
+    # Create a verified user for authentication
     user = User(
         email="verified@example.com",
         name="Verified User",
