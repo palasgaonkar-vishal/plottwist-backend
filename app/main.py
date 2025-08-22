@@ -10,6 +10,7 @@ from datetime import datetime
 
 from app.routers import auth_router, users_router
 from app.core.config import settings
+from app.database import create_tables
 
 app = FastAPI(
     title="PlotTwist API",
@@ -26,6 +27,12 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Database initialization
+@app.on_event("startup")
+async def startup_event():
+    """Create database tables on startup"""
+    create_tables()
 
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
