@@ -1,161 +1,211 @@
 # PlotTwist Backend
 
-FastAPI-based backend for the PlotTwist book review platform with AI-powered recommendations.
+A FastAPI-based backend for the PlotTwist book review platform with JWT authentication, database models, and comprehensive testing.
 
-## 🚀 Features
+## 🚀 Features Implemented
 
-- **FastAPI** REST API with automatic OpenAPI documentation
-- **PostgreSQL** database with SQLAlchemy ORM
-- **JWT Authentication** with refresh token support
-- **Alembic** database migrations
-- **Comprehensive testing** with pytest (80%+ coverage)
-- **Code quality** with Black formatting and Flake8 linting
+### ✅ Task 001: Project Setup and Infrastructure
+- FastAPI application with CORS middleware
+- Health check and documentation endpoints
+- Docker configuration for development
+- Testing framework with pytest
+- Code quality tools (pytest configuration)
 
-## 📋 Requirements
+### ✅ Task 002: Database Models and Authentication
+- **Database Models**: User, Book, Genre, Review, Favorite models with proper relationships
+- **JWT Authentication**: Register, login, refresh, logout endpoints with secure token handling
+- **Password Security**: bcrypt hashing with salting
+- **Database Migrations**: Alembic setup for schema management
+- **Data Seeding**: Comprehensive seeding script with sample data
+- **Authentication Middleware**: Protected routes with role-based access
+- **Test Coverage**: 73% coverage with comprehensive unit tests
 
-- Python 3.11+
-- PostgreSQL 15+
-- Docker & Docker Compose (for development)
+## 🏗️ Architecture
 
-## 🛠️ Development Setup
+### Database Schema
+- **Users**: Authentication, profiles, soft deletes
+- **Books**: Metadata, ratings, genre relationships
+- **Genres**: Normalized many-to-many with books
+- **Reviews**: User ratings and comments with unique constraints
+- **Favorites**: User's favorite books tracking
 
-### Option 1: Backend-Only Development (Recommended for Backend Development)
+### API Endpoints
 
-This setup runs only the backend and database, useful when working on backend features only:
+#### Authentication (`/api/v1/auth`)
+- `POST /register` - User registration with JWT tokens
+- `POST /login` - User authentication
+- `POST /refresh` - Refresh access tokens
+- `POST /logout` - Invalidate refresh tokens
+- `GET /me` - Get current user info
+- `GET /verify-token` - Verify token validity
+
+#### Users (`/api/v1/users`)
+- `GET /` - List users (verified users only)
+- `GET /{user_id}` - Get user by ID
+- `PUT /{user_id}` - Update user (self only)
+- `DELETE /{user_id}` - Delete user (self only)
+- `POST /{user_id}/verify` - Verify user email
+- `POST /{user_id}/activate` - Activate user account
+
+## 🧪 Testing
+
+Run the test suite with coverage:
 
 ```bash
-# Clone this repository
-git clone git@github.com:palasgaonkar-vishal/plottwist-backend.git
-cd plottwist-backend
-
-# Run backend with database
-docker-compose -f docker-compose.dev.yml up -d
-
-# The backend will be available at http://localhost:8000
-# API documentation at http://localhost:8000/api/v1/docs
+python -m pytest app/tests/ -v --cov=app --cov-report=term-missing
 ```
 
-### Option 2: Full-Stack Development
+Current test coverage: **73%**
 
-For full-stack development, clone both repositories and use the full-stack setup:
+Test categories:
+- **Models**: Database model validation, relationships, constraints
+- **Authentication**: JWT tokens, password hashing, security functions
+- **API Endpoints**: Authentication flow, user management
+- **Services**: Business logic testing
 
-```bash
-# Create a workspace directory
-mkdir plottwist-workspace
-cd plottwist-workspace
+## 🔧 Setup & Development
 
-# Clone both repositories
-git clone git@github.com:palasgaonkar-vishal/plottwist-backend.git
-git clone git@github.com:palasgaonkar-vishal/plottwist-frontend.git
+### Prerequisites
+- Python 3.10+
+- PostgreSQL 12+
 
-# Download the full-stack docker-compose file
-curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/docker-compose.fullstack.yml
-curl -O https://raw.githubusercontent.com/palasgaonkar-vishal/plottwist-backend/main/init-db.sql
-
-# Start all services
-docker-compose -f docker-compose.fullstack.yml up -d
-
-# Services will be available at:
-# - Frontend: http://localhost:3000
-# - Backend: http://localhost:8000
-# - Database: localhost:5432
-```
-
-### Option 3: Local Development (Without Docker)
-
+### Local Development
 1. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
 
-2. Set up environment variables:
+2. Set environment variables (create `.env`):
+   ```env
+   DATABASE_URL=postgresql://plottwist:plottwist@localhost/plottwist
+   SECRET_KEY=your-secret-key-here
+   DEBUG=true
+   ```
+
+3. Run database migrations:
    ```bash
-   cp .env.example .env
-   # Edit .env with your database credentials
+   alembic upgrade head
    ```
 
-3. Start PostgreSQL and create databases:
-   ```sql
-   CREATE DATABASE plottwist;
-   CREATE DATABASE plottwist_test;
-   ```
-
-4. Run the application:
+4. Seed the database (optional):
    ```bash
-   uvicorn app.main:app --reload
+   python seed_database.py
    ```
 
-## 🧪 Testing
+5. Start the development server:
+   ```bash
+   uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+   ```
 
-Run tests with coverage:
+### Docker Development
+Use the provided Docker Compose configuration for full-stack development:
+
 ```bash
-pytest --cov=app --cov-report=html
+# From the workspace root
+docker-compose up -d
 ```
 
-View coverage report:
-```bash
-open htmlcov/index.html
+## 🔐 Authentication
+
+### JWT Token Flow
+1. **Registration/Login**: Receive access token (1h) + refresh token (30d)
+2. **API Requests**: Include `Authorization: Bearer <access_token>`
+3. **Token Refresh**: Use refresh token to get new access token
+4. **Logout**: Invalidate refresh token
+
+### Security Features
+- bcrypt password hashing with salt
+- JWT tokens with expiration
+- Refresh token rotation
+- Protected routes with middleware
+- User role verification (active/verified)
+
+## 📊 Database Models
+
+### User Model
+```python
+class User(Base):
+    id: int (PK)
+    email: str (unique, indexed)
+    hashed_password: str
+    name: str
+    is_active: bool (default: True)
+    is_verified: bool (default: False)
+    refresh_token: str (nullable)
+    created_at: datetime
+    updated_at: datetime
 ```
 
-## 📝 Code Quality
-
-Format code:
-```bash
-black .
+### Book Model
+```python
+class Book(Base):
+    id: int (PK)
+    title: str (indexed)
+    author: str (indexed)
+    description: text
+    published_year: int (indexed)
+    isbn: str (unique, indexed)
+    cover_url: str
+    average_rating: float (default: 0.0)
+    total_reviews: int (default: 0)
+    created_at: datetime
+    updated_at: datetime
 ```
 
-Lint code:
-```bash
-flake8 .
+### Genre Model
+```python
+class Genre(Base):
+    id: int (PK)
+    name: str (unique, indexed)
+    description: text
+    created_at: datetime
 ```
 
-## 🏗️ Project Structure
-
-```
-app/
-├── __init__.py
-├── main.py              # FastAPI application entry point
-├── core/
-│   ├── __init__.py
-│   └── config.py        # Application configuration
-├── api/                 # API routes (added in later tasks)
-├── models/              # Database models (added in later tasks)
-├── services/            # Business logic (added in later tasks)
-└── tests/
-    ├── __init__.py
-    └── test_main.py     # Basic application tests
+### Review Model
+```python
+class Review(Base):
+    id: int (PK)
+    user_id: int (FK, indexed)
+    book_id: int (FK, indexed)
+    rating: float (1.0-5.0)
+    title: str
+    content: text
+    created_at: datetime
+    updated_at: datetime
+    # Constraint: unique(user_id, book_id)
 ```
 
-## 📚 API Documentation
+### Favorite Model
+```python
+class Favorite(Base):
+    id: int (PK)
+    user_id: int (FK, indexed)
+    book_id: int (FK, indexed)
+    created_at: datetime
+    # Constraint: unique(user_id, book_id)
+```
 
-- **Swagger UI**: `http://localhost:8000/api/v1/docs`
-- **ReDoc**: `http://localhost:8000/api/v1/redoc`
+## 📈 Next Steps (Upcoming Tasks)
+- **Task 003**: Book Data Population and Basic APIs
+- **Task 004**: Frontend Authentication and Routing
+- **Task 005**: Book Browsing and Search Frontend
+- **Task 006**: Review and Rating System Backend
+- **Task 007**: Review and Rating System Frontend
+- **Task 008**: User Profile and Favorites System
+- **Task 009**: Traditional Recommendation System
+- **Task 010**: AI-Powered Recommendations
+- **Task 011**: Deployment Infrastructure
+- **Task 012**: Final Integration and Testing
 
-## 🔒 Environment Variables
+## 🔗 Related Files
+- **Frontend Repository**: `../plottwist-frontend/`
+- **Full-Stack Setup**: `../docker-compose.yml`
+- **Database Initialization**: `./init-db.sql`
+- **Development Setup Guide**: `./DEVELOPMENT_SETUP.md`
+- **Troubleshooting Guide**: `./TROUBLESHOOTING.md`
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `DATABASE_URL` | PostgreSQL connection string | `postgresql://plottwist:plottwist@localhost/plottwist` |
-| `TEST_DATABASE_URL` | Test database connection string | `postgresql://plottwist:plottwist@localhost/plottwist_test` |
-| `SECRET_KEY` | JWT secret key | `your-secret-key-change-in-production` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | JWT access token expiration | `60` |
-| `REFRESH_TOKEN_EXPIRE_DAYS` | JWT refresh token expiration | `30` |
-| `OPENAI_API_KEY` | OpenAI API key for recommendations | `None` |
+## 📝 API Documentation
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Run tests (`pytest`)
-5. Commit your changes (`git commit -m 'Add some amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-## 🚀 Deployment
-
-Deployment configuration will be added in Task 011.
-
-## 📄 License
-
-This project is part of the PlotTwist book review platform. 
+Once the server is running, access the interactive API documentation at:
+- **Swagger UI**: http://localhost:8000/api/v1/docs
+- **ReDoc**: http://localhost:8000/api/v1/redoc 

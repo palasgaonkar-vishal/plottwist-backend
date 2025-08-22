@@ -2,45 +2,52 @@
 Application configuration management using environment variables.
 """
 
-from decouple import config
-from typing import Optional
+import os
+from typing import List
+from pydantic_settings import BaseSettings
 
 
-class Settings:
+class Settings(BaseSettings):
     """Application settings loaded from environment variables."""
     
-    # Database configuration
-    DATABASE_URL: str = config(
-        "DATABASE_URL", 
-        default="postgresql://plottwist:plottwist@localhost/plottwist"
-    )
-    TEST_DATABASE_URL: str = config(
-        "TEST_DATABASE_URL",
-        default="postgresql://plottwist:plottwist@localhost/plottwist_test"
-    )
-    
-    # JWT configuration
-    SECRET_KEY: str = config(
-        "SECRET_KEY", 
-        default="your-secret-key-change-in-production"
-    )
-    ALGORITHM: str = config("ALGORITHM", default="HS256")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = config("ACCESS_TOKEN_EXPIRE_MINUTES", default=60, cast=int)
-    REFRESH_TOKEN_EXPIRE_DAYS: int = config("REFRESH_TOKEN_EXPIRE_DAYS", default=30, cast=int)
-    
-    # API configuration
+    # API Configuration
     API_V1_STR: str = "/api/v1"
-    PROJECT_NAME: str = "PlotTwist"
+    PROJECT_NAME: str = "PlotTwist API"
     
-    # External APIs
-    OPENAI_API_KEY: Optional[str] = config("OPENAI_API_KEY", default=None)
+    # Database Configuration
+    DATABASE_URL: str = os.getenv(
+        "DATABASE_URL", 
+        "postgresql://plottwist:plottwist@localhost/plottwist"
+    )
+    TEST_DATABASE_URL: str = os.getenv(
+        "TEST_DATABASE_URL", 
+        "postgresql://plottwist:plottwist@localhost/plottwist_test"
+    )
     
-    # Environment
-    ENVIRONMENT: str = config("ENVIRONMENT", default="development")
-    DEBUG: bool = config("DEBUG", default=True, cast=bool)
+    # Security Configuration
+    SECRET_KEY: str = os.getenv("SECRET_KEY", "dev-secret-key-change-in-production")
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60  # 1 hour
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 30  # 30 days
     
-    # CORS
-    BACKEND_CORS_ORIGINS: list = ["http://localhost:3000"]
+    # CORS Configuration
+    BACKEND_CORS_ORIGINS: List[str] = [
+        "http://localhost:3000",  # React development server
+        "http://127.0.0.1:3000",
+        "http://localhost:8080",  # Alternative frontend port
+    ]
+    
+    # Environment Configuration
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "development")
+    DEBUG: bool = os.getenv("DEBUG", "true").lower() == "true"
+    
+    # Application Configuration
+    MAX_CONNECTIONS_COUNT: int = 10
+    MIN_CONNECTIONS_COUNT: int = 10
+    
+    class Config:
+        case_sensitive = True
 
 
+# Create settings instance
 settings = Settings() 
