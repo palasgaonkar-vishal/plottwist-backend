@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.database import get_db
@@ -17,21 +17,22 @@ from app.models.user import User
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-@router.post("/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/register", response_model=AuthResponse, status_code=status.HTTP_201_CREATED
+)
 def register_user(
-    user_data: UserRegister,
-    db: Session = Depends(get_db)
+    user_data: UserRegister, db: Session = Depends(get_db)
 ) -> AuthResponse:
     """
     Register a new user account.
-    
+
     Args:
         user_data: User registration data
         db: Database session
-        
+
     Returns:
         User information and authentication tokens
-        
+
     Raises:
         HTTPException: If email is already registered
     """
@@ -40,20 +41,17 @@ def register_user(
 
 
 @router.post("/login", response_model=AuthResponse)
-def login_user(
-    user_data: UserLogin,
-    db: Session = Depends(get_db)
-) -> AuthResponse:
+def login_user(user_data: UserLogin, db: Session = Depends(get_db)) -> AuthResponse:
     """
     Authenticate user and return tokens.
-    
+
     Args:
         user_data: User login credentials
         db: Database session
-        
+
     Returns:
         User information and authentication tokens
-        
+
     Raises:
         HTTPException: If credentials are invalid
     """
@@ -63,19 +61,18 @@ def login_user(
 
 @router.post("/refresh", response_model=Token)
 def refresh_access_token(
-    refresh_data: RefreshTokenRequest,
-    db: Session = Depends(get_db)
+    refresh_data: RefreshTokenRequest, db: Session = Depends(get_db)
 ) -> Token:
     """
     Refresh access token using refresh token.
-    
+
     Args:
         refresh_data: Refresh token request data
         db: Database session
-        
+
     Returns:
         New token pair
-        
+
     Raises:
         HTTPException: If refresh token is invalid
     """
@@ -85,12 +82,11 @@ def refresh_access_token(
 
 @router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
 def logout_user(
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
+    current_user: User = Depends(get_current_active_user), db: Session = Depends(get_db)
 ) -> None:
     """
     Logout current user by invalidating refresh token.
-    
+
     Args:
         current_user: Current authenticated user
         db: Database session
@@ -101,14 +97,14 @@ def logout_user(
 
 @router.get("/me", response_model=UserResponse)
 def get_current_user_info(
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ) -> UserResponse:
     """
     Get current user information.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         Current user information
     """
@@ -117,14 +113,14 @@ def get_current_user_info(
 
 @router.get("/verify-token")
 def verify_token_endpoint(
-    current_user: User = Depends(get_current_active_user)
+    current_user: User = Depends(get_current_active_user),
 ) -> dict:
     """
     Verify if the current token is valid.
-    
+
     Args:
         current_user: Current authenticated user
-        
+
     Returns:
         Token verification status
     """
@@ -132,5 +128,5 @@ def verify_token_endpoint(
         "valid": True,
         "user_id": current_user.id,
         "email": current_user.email,
-        "message": "Token is valid"
-    } 
+        "message": "Token is valid",
+    }

@@ -5,7 +5,8 @@ from sqlalchemy.orm import sessionmaker, Session
 from fastapi.testclient import TestClient
 
 from app.database import Base, get_db
-from app.main import app
+
+# app imported for reference but not used directly in tests anymore
 from app.models.user import User
 from app.models.book import Book, Genre
 from app.core.security import get_password_hash
@@ -13,8 +14,7 @@ from app.core.security import get_password_hash
 # Create test database
 SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, 
-    connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -24,10 +24,10 @@ def db_session() -> Generator[Session, None, None]:
     """Create a test database session."""
     # Create tables
     Base.metadata.create_all(bind=engine)
-    
+
     # Create session
     session = TestingSessionLocal()
-    
+
     try:
         yield session
     finally:
@@ -43,7 +43,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     from fastapi.middleware.cors import CORSMiddleware
     from app.routers import auth_router, users_router, books_router
     from app.core.config import settings
-    
+
     # Create a test app without startup events
     test_app = FastAPI(
         title="PlotTwist API Test",
@@ -52,7 +52,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         docs_url=f"{settings.API_V1_STR}/docs",
         redoc_url=f"{settings.API_V1_STR}/redoc",
     )
-    
+
     test_app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.BACKEND_CORS_ORIGINS,
@@ -60,32 +60,32 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Include routers
     test_app.include_router(auth_router, prefix=settings.API_V1_STR)
     test_app.include_router(users_router, prefix=settings.API_V1_STR)
     test_app.include_router(books_router, prefix=settings.API_V1_STR)
-    
+
     # Add basic routes
     @test_app.get("/", tags=["Root"])
     async def root():
         return {"message": "Test PlotTwist API"}
-    
+
     @test_app.get(f"{settings.API_V1_STR}/health", tags=["Health"])
     async def health_check():
         return {"status": "healthy", "test": True}
-    
+
     def override_get_db():
         try:
             yield db_session
         finally:
             pass
-    
+
     test_app.dependency_overrides[get_db] = override_get_db
-    
+
     with TestClient(test_app) as test_client:
         yield test_client
-    
+
     # Clear dependency overrides
     test_app.dependency_overrides.clear()
 
@@ -125,10 +125,7 @@ def sample_inactive_user(db_session: Session) -> User:
 @pytest.fixture
 def sample_genre(db_session: Session) -> Genre:
     """Create a sample genre for testing."""
-    genre = Genre(
-        name="Test Fiction",
-        description="A test fiction genre"
-    )
+    genre = Genre(name="Test Fiction", description="A test fiction genre")
     db_session.add(genre)
     db_session.commit()
     db_session.refresh(genre)
@@ -194,15 +191,15 @@ def multiple_users(db_session: Session) -> list[User]:
             is_verified=True,
         ),
     ]
-    
+
     for user in users:
         db_session.add(user)
-    
+
     db_session.commit()
-    
+
     for user in users:
         db_session.refresh(user)
-    
+
     return users
 
 
@@ -216,15 +213,15 @@ def multiple_genres(db_session: Session) -> list[Genre]:
         Genre(name="Romance", description="Romance stories"),
         Genre(name="Non-Fiction", description="Non-fictional content"),
     ]
-    
+
     for genre in genres:
         db_session.add(genre)
-    
+
     db_session.commit()
-    
+
     for genre in genres:
         db_session.refresh(genre)
-    
+
     return genres
 
 
@@ -283,21 +280,21 @@ def multiple_books(db_session: Session, multiple_genres: list[Genre]) -> list[Bo
             total_reviews=15,
         ),
     ]
-    
+
     for i, book in enumerate(books):
         db_session.add(book)
         db_session.flush()  # Get the book ID
-        
+
         # Add genre associations (different genres for variety)
         book.genres.append(multiple_genres[i % len(multiple_genres)])
         if i % 2 == 0 and len(multiple_genres) > 1:
             book.genres.append(multiple_genres[(i + 1) % len(multiple_genres)])
-    
+
     db_session.commit()
-    
+
     for book in books:
         db_session.refresh(book)
-    
+
     return books
 
 
@@ -314,19 +311,16 @@ def auth_headers(client: TestClient, db_session: Session) -> dict:
     )
     db_session.add(user)
     db_session.commit()
-    
+
     # Login to get tokens
-    login_data = {
-        "email": "auth@example.com",
-        "password": "password123"
-    }
-    
+    login_data = {"email": "auth@example.com", "password": "password123"}
+
     response = client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 200
-    
+
     tokens = response.json()["tokens"]
     access_token = tokens["access_token"]
-    
+
     return {"Authorization": f"Bearer {access_token}"}
 
 
@@ -343,17 +337,14 @@ def verified_user_headers(client: TestClient, db_session: Session) -> dict:
     )
     db_session.add(user)
     db_session.commit()
-    
+
     # Login to get tokens
-    login_data = {
-        "email": "verified@example.com",
-        "password": "password123"
-    }
-    
+    login_data = {"email": "verified@example.com", "password": "password123"}
+
     response = client.post("/api/v1/auth/login", json=login_data)
     assert response.status_code == 200
-    
+
     tokens = response.json()["tokens"]
     access_token = tokens["access_token"]
-    
-    return {"Authorization": f"Bearer {access_token}"} 
+
+    return {"Authorization": f"Bearer {access_token}"}

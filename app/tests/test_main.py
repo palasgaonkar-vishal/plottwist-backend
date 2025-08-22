@@ -2,7 +2,7 @@
 Tests for main application endpoints.
 """
 
-import pytest
+# pytest used for test functions
 from fastapi.testclient import TestClient
 from app.main import app
 
@@ -39,4 +39,4 @@ def test_docs_endpoint():
 def test_redoc_endpoint():
     """Test that ReDoc documentation is accessible."""
     response = client.get("/api/v1/redoc")
-    assert response.status_code == 200 
+    assert response.status_code == 200

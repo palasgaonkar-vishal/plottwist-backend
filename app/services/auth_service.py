@@ -40,7 +40,7 @@ class AuthService:
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
+                detail="Email already registered",
             )
 
         # Create user
@@ -52,14 +52,14 @@ class AuthService:
             is_active=True,
             is_verified=False,
         )
-        
+
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user)
 
         # Generate tokens
         tokens = self._create_user_tokens(db_user.id)
-        
+
         # Store refresh token
         db_user.refresh_token = tokens.refresh_token
         self.db.commit()
@@ -86,26 +86,25 @@ class AuthService:
         if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                detail="Invalid email or password",
             )
 
         # Verify password
         if not verify_password(user_data.password, user.hashed_password):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password"
+                detail="Invalid email or password",
             )
 
         # Check if user is active
         if not user.is_active:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account is disabled"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is disabled"
             )
 
         # Generate tokens
         tokens = self._create_user_tokens(user.id)
-        
+
         # Store refresh token
         user.refresh_token = tokens.refresh_token
         self.db.commit()
@@ -131,28 +130,25 @@ class AuthService:
         user_id = verify_token(refresh_token, token_type="refresh")
         if not user_id:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
             )
 
         # Get user and verify stored refresh token
         user = self.user_service.get_user_by_id(int(user_id))
         if not user or user.refresh_token != refresh_token:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid refresh token"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid refresh token"
             )
 
         # Check if user is active
         if not user.is_active:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Account is disabled"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Account is disabled"
             )
 
         # Generate new tokens
         tokens = self._create_user_tokens(user.id)
-        
+
         # Store new refresh token
         user.refresh_token = tokens.refresh_token
         self.db.commit()
@@ -172,8 +168,7 @@ class AuthService:
         user = self.user_service.get_user_by_id(user_id)
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
             )
 
         # Clear refresh token
@@ -214,10 +209,10 @@ class AuthService:
         """
         access_token = create_access_token(subject=user_id)
         refresh_token = create_refresh_token(subject=user_id)
-        
+
         return Token(
             access_token=access_token,
             refresh_token=refresh_token,
             token_type="bearer",
             expires_in=settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
-        ) 
+        )

@@ -1,0 +1,29 @@
+[flake8]
+# Exclude directories
+exclude = .git,__pycache__,.pytest_cache,.coverage,.tox,venv,env,.venv,.env,build,dist,*.egg-info,alembic/versions
+
+# Set maximum line length
+max-line-length = 127
+
+# Set maximum complexity
+max-complexity = 10
+
+# Ignore specific error codes that are too strict for our project
+ignore = E203,W503,E501
+
+# Per-file ignores for specific cases
+per-file-ignores =
+    alembic/env.py:E402,F401
+    seed_database.py:W293
+
+# Select specific error codes to check
+select = E,W,F
+
+# Show source code in output
+show-source = True
+
+# Count the number of occurrences of each error/warning code
+count = True
+
+# Print total number of errors and warnings to stderr  
+statistics = True 

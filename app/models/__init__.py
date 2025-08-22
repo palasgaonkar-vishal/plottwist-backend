@@ -5,9 +5,9 @@ from .favorite import Favorite
 
 __all__ = [
     "User",
-    "Book", 
+    "Book",
     "Genre",
     "BookGenre",
     "Review",
     "Favorite",
-] 
+]

@@ -6,4 +6,4 @@ __all__ = [
     "auth_router",
     "users_router",
     "books_router",
-] 
+]

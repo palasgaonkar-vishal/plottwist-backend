@@ -62,8 +62,9 @@ def run_migrations_online() -> None:
     """
     # Override the sqlalchemy.url with our app configuration
     from app.core.config import settings
+
     config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
-    
+
     connectable = engine_from_config(
         config.get_section(config.config_ini_section, {}),
         prefix="sqlalchemy.",
@@ -71,9 +72,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection, target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()
@@ -82,4 +81,4 @@ def run_migrations_online() -> None:
 if context.is_offline_mode():
     run_migrations_offline()
 else:
-    run_migrations_online() 
+    run_migrations_online()

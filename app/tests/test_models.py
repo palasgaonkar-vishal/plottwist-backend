@@ -1,10 +1,11 @@
 import pytest
-from datetime import datetime
+
+# datetime used in model creation tests
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.models.user import User
-from app.models.book import Book, Genre, book_genre_association
+from app.models.book import Book, Genre
 from app.models.review import Review
 from app.models.favorite import Favorite
 from app.core.security import get_password_hash
@@ -24,7 +25,7 @@ class TestUserModel:
         )
         db_session.add(user)
         db_session.commit()
-        
+
         assert user.id is not None
         assert user.email == "test@example.com"
         assert user.name == "Test User"
@@ -43,14 +44,14 @@ class TestUserModel:
         )
         db_session.add(user1)
         db_session.commit()
-        
+
         user2 = User(
             email="test@example.com",
             name="Test User 2",
             hashed_password=get_password_hash("password456"),
         )
         db_session.add(user2)
-        
+
         with pytest.raises(IntegrityError):
             db_session.commit()
 
@@ -63,7 +64,7 @@ class TestUserModel:
         )
         db_session.add(user)
         db_session.commit()
-        
+
         expected = f"<User(id={user.id}, email='test@example.com', name='Test User')>"
         assert repr(user) == expected
 
@@ -76,7 +77,7 @@ class TestUserModel:
         )
         db_session.add(user)
         db_session.commit()
-        
+
         # Initially no relationships
         assert len(user.reviews) == 0
         assert len(user.favorites) == 0
@@ -93,7 +94,7 @@ class TestGenreModel:
         )
         db_session.add(genre)
         db_session.commit()
-        
+
         assert genre.id is not None
         assert genre.name == "Fiction"
         assert genre.description == "Imaginative or invented stories"
@@ -104,10 +105,10 @@ class TestGenreModel:
         genre1 = Genre(name="Fiction", description="First description")
         db_session.add(genre1)
         db_session.commit()
-        
+
         genre2 = Genre(name="Fiction", description="Second description")
         db_session.add(genre2)
-        
+
         with pytest.raises(IntegrityError):
             db_session.commit()
 
@@ -116,7 +117,7 @@ class TestGenreModel:
         genre = Genre(name="Fiction", description="Test description")
         db_session.add(genre)
         db_session.commit()
-        
+
         expected = f"<Genre(id={genre.id}, name='Fiction')>"
         assert repr(genre) == expected
 
@@ -138,7 +139,7 @@ class TestBookModel:
         )
         db_session.add(book)
         db_session.commit()
-        
+
         assert book.id is not None
         assert book.title == "Test Book"
         assert book.author == "Test Author"
@@ -160,14 +161,14 @@ class TestBookModel:
         )
         db_session.add(book1)
         db_session.commit()
-        
+
         book2 = Book(
             title="Book 2",
             author="Author 2",
             isbn="9781234567890",
         )
         db_session.add(book2)
-        
+
         with pytest.raises(IntegrityError):
             db_session.commit()
 
@@ -178,7 +179,7 @@ class TestBookModel:
         mystery = Genre(name="Mystery")
         db_session.add_all([fiction, mystery])
         db_session.commit()
-        
+
         # Create book
         book = Book(
             title="Test Book",
@@ -187,7 +188,7 @@ class TestBookModel:
         book.genres.extend([fiction, mystery])
         db_session.add(book)
         db_session.commit()
-        
+
         # Test relationship
         assert len(book.genres) == 2
         assert fiction in book.genres
@@ -203,7 +204,7 @@ class TestBookModel:
         )
         db_session.add(book)
         db_session.commit()
-        
+
         expected = f"<Book(id={book.id}, title='Test Book', author='Test Author')>"
         assert repr(book) == expected
 
@@ -222,7 +223,7 @@ class TestReviewModel:
         )
         db_session.add(review)
         db_session.commit()
-        
+
         assert review.id is not None
         assert review.user_id == sample_user.id
         assert review.book_id == sample_book.id
@@ -232,7 +233,9 @@ class TestReviewModel:
         assert review.created_at is not None
         assert review.updated_at is not None
 
-    def test_review_unique_constraint(self, db_session: Session, sample_user, sample_book):
+    def test_review_unique_constraint(
+        self, db_session: Session, sample_user, sample_book
+    ):
         """Test that user can only review a book once."""
         review1 = Review(
             user_id=sample_user.id,
@@ -241,18 +244,20 @@ class TestReviewModel:
         )
         db_session.add(review1)
         db_session.commit()
-        
+
         review2 = Review(
             user_id=sample_user.id,
             book_id=sample_book.id,
             rating=3.0,
         )
         db_session.add(review2)
-        
+
         with pytest.raises(IntegrityError):
             db_session.commit()
 
-    def test_review_rating_validation_property(self, db_session: Session, sample_user, sample_book):
+    def test_review_rating_validation_property(
+        self, db_session: Session, sample_user, sample_book
+    ):
         """Test review rating validation property."""
         # Valid rating
         review1 = Review(
@@ -261,7 +266,7 @@ class TestReviewModel:
             rating=3.5,
         )
         assert review1.is_valid_rating is True
-        
+
         # Invalid ratings
         review2 = Review(
             user_id=sample_user.id,
@@ -269,7 +274,7 @@ class TestReviewModel:
             rating=0.5,
         )
         assert review2.is_valid_rating is False
-        
+
         review3 = Review(
             user_id=sample_user.id,
             book_id=sample_book.id,
@@ -286,7 +291,7 @@ class TestReviewModel:
         )
         db_session.add(review)
         db_session.commit()
-        
+
         # Test relationships
         assert review.user == sample_user
         assert review.book == sample_book
@@ -302,7 +307,7 @@ class TestReviewModel:
         )
         db_session.add(review)
         db_session.commit()
-        
+
         expected = f"<Review(id={review.id}, user_id={sample_user.id}, book_id={sample_book.id}, rating=4.5)>"
         assert repr(review) == expected
 
@@ -318,13 +323,15 @@ class TestFavoriteModel:
         )
         db_session.add(favorite)
         db_session.commit()
-        
+
         assert favorite.id is not None
         assert favorite.user_id == sample_user.id
         assert favorite.book_id == sample_book.id
         assert favorite.created_at is not None
 
-    def test_favorite_unique_constraint(self, db_session: Session, sample_user, sample_book):
+    def test_favorite_unique_constraint(
+        self, db_session: Session, sample_user, sample_book
+    ):
         """Test that user can only favorite a book once."""
         favorite1 = Favorite(
             user_id=sample_user.id,
@@ -332,17 +339,19 @@ class TestFavoriteModel:
         )
         db_session.add(favorite1)
         db_session.commit()
-        
+
         favorite2 = Favorite(
             user_id=sample_user.id,
             book_id=sample_book.id,
         )
         db_session.add(favorite2)
-        
+
         with pytest.raises(IntegrityError):
             db_session.commit()
 
-    def test_favorite_relationships(self, db_session: Session, sample_user, sample_book):
+    def test_favorite_relationships(
+        self, db_session: Session, sample_user, sample_book
+    ):
         """Test favorite relationships with user and book."""
         favorite = Favorite(
             user_id=sample_user.id,
@@ -350,7 +359,7 @@ class TestFavoriteModel:
         )
         db_session.add(favorite)
         db_session.commit()
-        
+
         # Test relationships
         assert favorite.user == sample_user
         assert favorite.book == sample_book
@@ -365,7 +374,7 @@ class TestFavoriteModel:
         )
         db_session.add(favorite)
         db_session.commit()
-        
+
         expected = f"<Favorite(id={favorite.id}, user_id={sample_user.id}, book_id={sample_book.id})>"
         assert repr(favorite) == expected
 
@@ -377,15 +386,17 @@ class TestFavoriteModel:
         )
         db_session.add(favorite)
         db_session.commit()
-        
+
         favorite_id = favorite.id
-        
+
         # Delete user
         db_session.delete(sample_user)
         db_session.commit()
-        
+
         # Favorite should be deleted
-        deleted_favorite = db_session.query(Favorite).filter(Favorite.id == favorite_id).first()
+        deleted_favorite = (
+            db_session.query(Favorite).filter(Favorite.id == favorite_id).first()
+        )
         assert deleted_favorite is None
 
     def test_cascade_delete_book(self, db_session: Session, sample_user, sample_book):
@@ -396,13 +407,15 @@ class TestFavoriteModel:
         )
         db_session.add(favorite)
         db_session.commit()
-        
+
         favorite_id = favorite.id
-        
+
         # Delete book
         db_session.delete(sample_book)
         db_session.commit()
-        
+
         # Favorite should be deleted
-        deleted_favorite = db_session.query(Favorite).filter(Favorite.id == favorite_id).first()
-        assert deleted_favorite is None 
+        deleted_favorite = (
+            db_session.query(Favorite).filter(Favorite.id == favorite_id).first()
+        )
+        assert deleted_favorite is None

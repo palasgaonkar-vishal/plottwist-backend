@@ -21,7 +21,7 @@ Base = declarative_base()
 def get_db():
     """
     Database dependency for FastAPI endpoints.
-    
+
     Yields:
         Session: SQLAlchemy database session
     """
@@ -38,4 +38,4 @@ def create_tables():
     This should only be used for testing or development.
     In production, use Alembic migrations.
     """
-    Base.metadata.create_all(bind=engine) 
+    Base.metadata.create_all(bind=engine)

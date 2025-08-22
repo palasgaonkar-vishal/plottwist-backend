@@ -28,11 +28,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Database initialization
 @app.on_event("startup")
 async def startup_event():
     """Create database tables on startup"""
     create_tables()
+
 
 # Include routers
 app.include_router(auth_router, prefix=settings.API_V1_STR)
@@ -51,7 +53,7 @@ async def root():
             "Book Reviews and Ratings",
             "User Profiles and Favorites",
             "AI-Powered Recommendations",
-        ]
+        ],
     }
 
 
@@ -69,16 +71,12 @@ async def health_check():
                 "authentication": True,
                 "user_management": True,
                 "database_models": True,
-            }
-        }
+            },
+        },
     )
 
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "app.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    ) 
+
+    uvicorn.run("app.main:app", host="0.0.0.0", port=8000, reload=True)

@@ -68,7 +68,7 @@ class UserService:
         if existing_user:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered"
+                detail="Email already registered",
             )
 
         # Create user
@@ -80,11 +80,11 @@ class UserService:
             is_active=True,
             is_verified=False,
         )
-        
+
         self.db.add(db_user)
         self.db.commit()
         self.db.refresh(db_user)
-        
+
         return db_user
 
     def update_user(self, user_id: int, user_data: UserUpdate) -> Optional[User]:
@@ -111,22 +111,24 @@ class UserService:
             if existing_user:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="Email already registered"
+                    detail="Email already registered",
                 )
 
         # Update fields
         update_data = user_data.dict(exclude_unset=True)
-        
+
         # Handle password hashing
         if "password" in update_data:
-            update_data["hashed_password"] = get_password_hash(update_data.pop("password"))
+            update_data["hashed_password"] = get_password_hash(
+                update_data.pop("password")
+            )
 
         for field, value in update_data.items():
             setattr(user, field, value)
 
         self.db.commit()
         self.db.refresh(user)
-        
+
         return user
 
     def delete_user(self, user_id: int) -> bool:
@@ -146,7 +148,7 @@ class UserService:
         user.is_active = False
         user.refresh_token = None  # Invalidate refresh token
         self.db.commit()
-        
+
         return True
 
     def activate_user(self, user_id: int) -> bool:
@@ -165,7 +167,7 @@ class UserService:
 
         user.is_active = True
         self.db.commit()
-        
+
         return True
 
     def verify_user_email(self, user_id: int) -> bool:
@@ -184,5 +186,5 @@ class UserService:
 
         user.is_verified = True
         self.db.commit()
-        
-        return True 
+
+        return True
