@@ -14,15 +14,20 @@ A FastAPI-based backend for the PlotTwist book review platform with JWT authenti
 ### ✅ Task 002: Database Models and Authentication
 - **Database Models**: User, Book, Genre, Review, Favorite models with proper relationships
 - **JWT Authentication**: Register, login, refresh, logout endpoints with secure token handling
-- **Book Management**: Complete CRUD operations for books with genre associations
-- **Open Library Integration**: Automated book data population from Open Library API
-- **Advanced Search**: Multi-criteria book search (title, author, genre, rating, year)
-- **Pagination Support**: Efficient pagination for large datasets (10 items per page)
 - **Password Security**: bcrypt hashing with salting
 - **Database Migrations**: Alembic setup for schema management
-- **Data Seeding**: Intelligent seeder with Open Library API integration (500+ books)
 - **Authentication Middleware**: Protected routes with role-based access
-- **Test Coverage**: 80% coverage with comprehensive unit tests
+- **User Management**: Complete CRUD operations for users with soft deletes
+
+### ✅ Task 003: Book Data Population and Basic APIs
+- **Open Library Integration**: Automated book data population from Open Library API (500+ books)
+- **Book Management**: Complete CRUD operations for books with genre associations
+- **Advanced Search**: Multi-criteria book search (title, author, genre, rating, year)
+- **Pagination Support**: Efficient pagination for large datasets (10 items per page)
+- **Genre Management**: Full CRUD operations for book genres
+- **Data Seeding**: Intelligent seeder with Open Library API integration and real book data
+- **RESTful APIs**: 8 endpoints for book and genre operations
+- **Test Coverage**: 80% coverage with 53 comprehensive unit tests
 
 ## 🏗️ Architecture
 
@@ -74,11 +79,32 @@ python -m pytest app/tests/ -v --cov=app --cov-report=term-missing
 Current test coverage: **80%**
 
 Test categories:
-- **Models**: Database model validation, relationships, constraints
-- **Authentication**: JWT tokens, password hashing, security functions
-- **API Endpoints**: Authentication, user management, book operations
-- **Services**: Business logic for auth, users, books, and genres
-- **Book Operations**: CRUD operations, search, filtering, pagination
+- **Models**: Database model validation, relationships, constraints (22 tests)
+- **Authentication**: JWT tokens, password hashing, security functions (20 tests)
+- **API Endpoints**: Authentication, user management, book operations (24 tests)
+- **Services**: Business logic for auth, users, books, and genres (29 tests)
+- **Book Operations**: CRUD operations, search, filtering, pagination (24 tests)
+
+### Testing the Book APIs
+
+You can test the book APIs directly using the FastAPI docs interface or curl:
+
+```bash
+# Start the server
+uvicorn app.main:app --reload
+
+# Access the interactive API docs
+open http://localhost:8000/api/v1/docs
+
+# Test book listing
+curl "http://localhost:8000/api/v1/books/"
+
+# Test book search
+curl "http://localhost:8000/api/v1/books/search?query=fiction&page=1&per_page=5"
+
+# Test genre listing
+curl "http://localhost:8000/api/v1/books/genres/"
+```
 
 ## 🔧 Setup & Development
 
@@ -221,6 +247,76 @@ class Favorite(Base):
 - **Development Setup Guide**: `./DEVELOPMENT_SETUP.md`
 - **Troubleshooting Guide**: `./TROUBLESHOOTING.md`
 
+## 📚 Database Seeding
+
+The application includes an intelligent database seeder that populates the database with real book data from Open Library:
+
+### Manual Seeding
+
+```bash
+# Seed the database with 500+ books from Open Library
+python seed_database.py
+
+# Clear all data and reseed (use with caution)
+python seed_database.py --clear
+```
+
+### What Gets Seeded
+
+- **Genres**: 15 standard book genres (Fiction, Science Fiction, Mystery, etc.)
+- **Books**: 500+ real books from Open Library with:
+  - Titles, authors, descriptions
+  - Publication years and ISBNs
+  - Cover image URLs from Open Library
+  - Proper genre associations
+- **Users**: 5 test users for development
+- **Reviews**: Sample reviews with realistic ratings
+- **Favorites**: Sample user favorites for testing
+
+### Open Library Integration
+
+The seeder intelligently fetches books by searching different subjects and maps Open Library data to our schema:
+- Fetches books from 20 different subjects for diversity
+- Maps Open Library subjects to our genre system
+- Generates meaningful descriptions from metadata
+- Handles API rate limiting and error cases
+- Validates and sanitizes all imported data
+
+## 📚 Database Seeding
+
+The application includes an intelligent database seeder that populates the database with real book data from Open Library:
+
+### Manual Seeding
+
+```bash
+# Seed the database with 500+ books from Open Library
+python seed_database.py
+
+# Clear all data and reseed (use with caution)
+python seed_database.py --clear
+```
+
+### What Gets Seeded
+
+- **Genres**: 15 standard book genres (Fiction, Science Fiction, Mystery, etc.)
+- **Books**: 500+ real books from Open Library with:
+  - Titles, authors, descriptions
+  - Publication years and ISBNs
+  - Cover image URLs from Open Library
+  - Proper genre associations
+- **Users**: 5 test users for development
+- **Reviews**: Sample reviews with realistic ratings
+- **Favorites**: Sample user favorites for testing
+
+### Open Library Integration
+
+The seeder intelligently fetches books by searching different subjects and maps Open Library data to our schema:
+- Fetches books from 20 different subjects for diversity
+- Maps Open Library subjects to our genre system
+- Generates meaningful descriptions from metadata
+- Handles API rate limiting and error cases
+- Validates and sanitizes all imported data
+
 ## 🐛 Common Issues & Fixes
 
 ### "relation 'users' does not exist" Error
@@ -232,8 +328,77 @@ If you see this error when trying to register users, it means the database table
 - **Fixed**: `pytest-cov==2.12.1` is now included in `requirements.txt`
 - **Usage**: Run `pytest --cov=app --cov-report=term-missing` to calculate test coverage
 
+## 📚 Database Seeding
+
+The application includes an intelligent database seeder that populates the database with real book data from Open Library:
+
+### Manual Seeding
+
+```bash
+# Seed the database with 500+ books from Open Library
+python seed_database.py
+
+# Clear all data and reseed (use with caution)
+python seed_database.py --clear
+```
+
+### What Gets Seeded
+
+- **Genres**: 15 standard book genres (Fiction, Science Fiction, Mystery, etc.)
+- **Books**: 500+ real books from Open Library with:
+  - Titles, authors, descriptions
+  - Publication years and ISBNs
+  - Cover image URLs from Open Library
+  - Proper genre associations
+- **Users**: 5 test users for development
+- **Reviews**: Sample reviews with realistic ratings
+- **Favorites**: Sample user favorites for testing
+
+### Open Library Integration
+
+The seeder intelligently fetches books by searching different subjects and maps Open Library data to our schema:
+- Fetches books from 20 different subjects for diversity
+- Maps Open Library subjects to our genre system
+- Generates meaningful descriptions from metadata
+- Handles API rate limiting and error cases
+- Validates and sanitizes all imported data
+
 ## 📝 API Documentation
 
 Once the server is running, access the interactive API documentation at:
 - **Swagger UI**: http://localhost:8000/api/v1/docs
 - **ReDoc**: http://localhost:8000/api/v1/redoc 
+## 📚 Database Seeding
+
+The application includes an intelligent database seeder that populates the database with real book data from Open Library:
+
+### Manual Seeding
+
+```bash
+# Seed the database with 500+ books from Open Library
+python seed_database.py
+
+# Clear all data and reseed (use with caution)
+python seed_database.py --clear
+```
+
+### What Gets Seeded
+
+- **Genres**: 15 standard book genres (Fiction, Science Fiction, Mystery, etc.)
+- **Books**: 500+ real books from Open Library with:
+  - Titles, authors, descriptions
+  - Publication years and ISBNs
+  - Cover image URLs from Open Library
+  - Proper genre associations
+- **Users**: 5 test users for development
+- **Reviews**: Sample reviews with realistic ratings
+- **Favorites**: Sample user favorites for testing
+
+### Open Library Integration
+
+The seeder intelligently fetches books by searching different subjects and maps Open Library data to our schema:
+- Fetches books from 20 different subjects for diversity
+- Maps Open Library subjects to our genre system
+- Generates meaningful descriptions from metadata
+- Handles API rate limiting and error cases
+- Validates and sanitizes all imported data
