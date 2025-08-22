@@ -117,3 +117,9 @@ Thumbs.db
 # Alembic
 alembic/versions/*.py
 !alembic/versions/.gitkeep 
+# Test databases
+test.db
+test.db-*
+*.db
+*.sqlite
+*.sqlite3

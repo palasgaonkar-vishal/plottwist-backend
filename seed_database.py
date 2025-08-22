@@ -21,8 +21,7 @@ import argparse
 import logging
 from sqlalchemy.exc import IntegrityError
 
-from app.database import SessionLocal, engine
-from app.models import Base
+from app.database import SessionLocal, engine, Base
 from app.utils.seeder import DatabaseSeeder
 
 # Configure logging
