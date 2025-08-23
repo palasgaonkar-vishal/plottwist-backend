@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:13
+    container_name: plottwist_db
+    environment:
+      POSTGRES_DB: plottwist
+      POSTGRES_USER: plottwist
+      POSTGRES_PASSWORD: plottwist123
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plottwist -d plottwist -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      - plottwist-network
+
+  # Backend API
+  backend:
+    build:
+      context: ./plottwist-backend
+      dockerfile: Dockerfile
+    container_name: plottwist_backend
+    environment:
+      - DATABASE_URL=postgresql://plottwist:plottwist123@db:5432/plottwist
+      - JWT_SECRET_KEY=your-super-secret-jwt-key-change-in-production-please-make-it-longer-and-more-secure
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=15
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+      - PYTHONPATH=/app
+      - ENVIRONMENT=development
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./plottwist-backend:/app
+    command: >
+      sh -c "
+        echo 'Waiting for database to be ready...' &&
+        python -c 'import time; time.sleep(10)' &&
+        echo 'Starting backend server...' &&
+        uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    networks:
+      - plottwist-network
+
+  # Frontend React App
+  frontend:
+    build:
+      context: ./plottwist-frontend
+      dockerfile: Dockerfile
+    container_name: plottwist_frontend
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000/api/v1
+      - CHOKIDAR_USEPOLLING=true
+      - WATCHPACK_POLLING=true
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./plottwist-frontend:/app
+      - /app/node_modules
+      - /app/.next
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    networks:
+      - plottwist-network
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  plottwist-network:
+    driver: bridge 
