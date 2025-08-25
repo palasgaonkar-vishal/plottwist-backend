@@ -4,7 +4,7 @@ Provides endpoints for book listing, searching, CRUD operations, and genre manag
 """
 
 import logging
-from typing import Optional
+from typing import Optional, List
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
@@ -226,7 +226,7 @@ async def delete_book(
 genre_router = APIRouter(prefix="/genres", tags=["genres"])
 
 
-@genre_router.get("/", response_model=list[GenreResponse])
+@genre_router.get("/", response_model=List[GenreResponse])
 async def list_genres(
     db: Session = Depends(get_db),
     current_user: Optional[User] = Depends(get_optional_current_user),
