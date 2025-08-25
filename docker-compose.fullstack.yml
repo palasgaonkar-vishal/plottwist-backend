@@ -72,6 +72,9 @@ services:
       - REACT_APP_API_URL=http://localhost:8000/api/v1
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
+      - NODE_OPTIONS=--max_old_space_size=4096
+      - NODE_ENV=development
+      - GENERATE_SOURCEMAP=false
     ports:
       - "3000:3000"
     depends_on:
