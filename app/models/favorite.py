@@ -18,7 +18,7 @@ class Favorite(Base):
     
     # Relationships
     user = relationship("User", back_populates="favorites")
-    book = relationship("Book", back_populates="favorited_by")
+    book = relationship("Book", back_populates="favorites")
     
     # Ensure a user can only favorite a book once
     __table_args__ = (

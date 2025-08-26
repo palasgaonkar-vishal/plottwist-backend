@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from datetime import datetime
 
-from app.routers import auth_router, users_router, books_router, reviews_router
+from app.routers import auth_router, users_router, books_router, reviews_router, favorites_router, recommendations_router
 from app.core.config import settings
 from app.database import create_tables
 
@@ -41,6 +41,8 @@ app.include_router(auth_router, prefix=settings.API_V1_STR)
 app.include_router(users_router, prefix=settings.API_V1_STR)
 app.include_router(books_router, prefix=settings.API_V1_STR)
 app.include_router(reviews_router, prefix=settings.API_V1_STR)
+app.include_router(favorites_router, prefix=settings.API_V1_STR)
+app.include_router(recommendations_router, prefix=settings.API_V1_STR)
 
 
 @app.get("/", tags=["Root"])

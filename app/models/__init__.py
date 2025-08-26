@@ -2,6 +2,7 @@ from .user import User
 from .book import Book, Genre, BookGenre
 from .review import Review
 from .favorite import Favorite
+from .recommendation import RecommendationFeedback, RecommendationType
 
 __all__ = [
     "User",
@@ -10,4 +11,6 @@ __all__ = [
     "BookGenre",
     "Review",
     "Favorite",
+    "RecommendationFeedback",
+    "RecommendationType",
 ]
