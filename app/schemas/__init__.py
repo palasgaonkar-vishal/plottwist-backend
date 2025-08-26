@@ -7,7 +7,7 @@ from .auth import (
     RefreshTokenRequest,
     AuthResponse,
 )
-from .user import UserCreate, UserUpdate, UserInDB
+from .user import UserCreate, UserUpdate, UserResponse, UserProfileResponse
 from .book import (
     GenreBase,
     GenreResponse,
