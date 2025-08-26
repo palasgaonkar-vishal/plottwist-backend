@@ -2,47 +2,17 @@
 
 A modern FastAPI backend for the PlotTwist book review platform with JWT authentication, PostgreSQL database, and comprehensive book management APIs.
 
-## 🚀 Features Implemented
+## 🚀 Features
 
-### ✅ Task 001: Project Setup and Infrastructure (Completed)
-- FastAPI application with modern Python architecture
-- PostgreSQL database with Alembic migrations
-- Docker and Docker Compose setup
-- Development environment configuration
-- Health check endpoints
-
-### ✅ Task 002: Database Models and Authentication (Completed)
-- **User Authentication**: Complete JWT-based auth system with refresh tokens
-- **Database Models**: User, Book, Genre, and Review models with relationships
-- **Password Security**: Bcrypt hashing with salt
-- **Session Management**: Access and refresh token lifecycle
-- **User Management**: Registration, login, logout, and profile endpoints
-
-### ✅ Task 003: Book Data Population and Basic APIs (Completed)
-- **Open Library Integration**: Automated book data fetching from Open Library API
-- **Book Management**: Full CRUD operations for books and genres
-- **Advanced Search**: Multi-criteria search with filters (title, author, genre, rating, year)
-- **Data Seeding**: Intelligent seeder with 500+ books from various genres
-- **Pagination**: Efficient pagination for large datasets
-- **Genre System**: Dynamic genre management with book categorization
-
-### ✅ Task 005: Backend Support for Frontend Book Browsing (Validated - December 25, 2024)
-- **API Endpoints Tested**: All book browsing APIs (GET /books, GET /books/search, GET /books/{id}, GET /books/genres) fully validated
-- **Performance Optimized**: Efficient database queries with proper indexing and pagination support
-- **Data Validation**: Comprehensive Pydantic schemas for request/response validation with error handling
-- **Search Functionality**: Advanced multi-criteria search with title, author, genre, rating, and year filters
-- **Pagination**: Robust pagination with configurable page sizes and total count calculation
-- **Error Handling**: Detailed error responses with proper HTTP status codes and user-friendly messages
-- **Test Coverage**: 80% overall coverage maintained with 100% coverage on critical book APIs
-- **Database Integration**: Optimized SQLAlchemy queries with proper relationship loading
-- **API Documentation**: Comprehensive OpenAPI/Swagger documentation for all endpoints
-
-#### 📊 Validation Results
-- **Book API Tests**: 100% coverage (24 test cases)
-- **Book Service Tests**: 100% coverage (31 test cases)  
-- **Integration Tests**: Full end-to-end API validation
-- **Performance**: Sub-100ms response times for paginated queries
-- **Data Integrity**: Proper handling of missing data and edge cases
+### ✅ Implemented
+- **User Authentication**: JWT-based authentication with refresh tokens
+- **Book Management**: Complete CRUD operations with search and filtering
+- **Genre System**: Dynamic genre management and categorization
+- **Review System**: Complete review and rating functionality with statistics
+- **Open Library Integration**: Automatic book data enrichment
+- **Database Models**: PostgreSQL with SQLAlchemy ORM
+- **API Documentation**: Interactive OpenAPI (Swagger) documentation
+- **Comprehensive Testing**: 83% test coverage with 135+ tests
 
 ## 🏗️ Architecture
 
@@ -128,6 +98,36 @@ GET    /api/v1/books/genres/{id}   # Get specific genre
 - **Rating Range**: Filter by minimum rating
 - **Publication Year**: Filter by year range
 - **Combined Filters**: All filters work together
+
+## 📝 Review and Rating System
+
+### Features
+- **Complete CRUD Operations**: Create, read, update, delete reviews with proper authorization
+- **Rating Validation**: 1-5 star rating system with comprehensive validation
+- **Automatic Statistics**: Real-time calculation of average ratings and review counts
+- **Review Ownership**: Users can only edit/delete their own reviews
+- **Pagination & Sorting**: Efficient paginated review listing with customizable sorting
+- **Rating Analytics**: Detailed rating distribution and user statistics
+- **Real-time Updates**: Book statistics update automatically when reviews change
+
+### Review API Endpoints
+```
+POST   /api/v1/reviews/                    # Create new review
+GET    /api/v1/reviews/{review_id}         # Get specific review
+PUT    /api/v1/reviews/{review_id}         # Update review (owner only)
+DELETE /api/v1/reviews/{review_id}         # Delete review (owner only)
+GET    /api/v1/reviews/book/{book_id}      # Get reviews for book (paginated)
+GET    /api/v1/reviews/book/{book_id}/stats # Get book rating statistics
+GET    /api/v1/reviews/user/me             # Get current user's reviews
+GET    /api/v1/reviews/user/me/stats       # Get user review statistics
+GET    /api/v1/reviews/user/me/book/{book_id} # Get user's review for specific book
+```
+
+### Rating Statistics
+- **Average Rating**: Calculated automatically from all reviews
+- **Total Reviews**: Real-time count of reviews per book
+- **Rating Distribution**: Breakdown of 1-5 star ratings
+- **User Statistics**: Individual user review counts and average ratings
 
 ## 🗃️ Database Schema
 
@@ -429,16 +429,14 @@ services:
 ## 🎯 Current Status
 
 **✅ Completed**: 
-- Full authentication system with JWT
-- Complete book management with Open Library integration
-- Advanced search and filtering
-- Database models and migrations
-- 80%+ test coverage
+- Task 001-003: Project setup, authentication, and book management
+- Task 006: Complete review and rating system with 83% test coverage
 
-**🔄 Next Tasks**: 
-- Review and rating system (Task 006)
-- Frontend integration testing
-- Performance optimizations
+**📋 Next**: 
+- Task 007: Frontend review system integration
+- Task 008: User profiles and favorites system
+
+**🔧 Active Development**: Adding AI-powered recommendation features
 
 ---
 
