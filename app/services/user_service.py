@@ -1,10 +1,13 @@
 from typing import Optional, List
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
+from sqlalchemy import func, and_, extract
+from typing import Optional, Dict, Any
+from datetime import datetime, timedelta
 
 from app.models.user import User
-from app.schemas.user import UserCreate, UserUpdate
-from app.core.security import get_password_hash
+from app.schemas.user import UserCreate, UserUpdate, UserProfileStats
+from app.core.security import get_password_hash, verify_password
 
 
 class UserService:
@@ -187,4 +190,92 @@ class UserService:
         user.is_verified = True
         self.db.commit()
 
+        return True
+
+    def get_user_profile_stats(self, user_id: int) -> UserProfileStats:
+        """Get comprehensive user profile statistics"""
+        # Get total reviews count
+        total_reviews = self.db.query(func.count(Review.id)).filter(
+            Review.user_id == user_id
+        ).scalar() or 0
+        
+        # Get average rating given by user
+        avg_rating = self.db.query(func.avg(Review.rating)).filter(
+            Review.user_id == user_id
+        ).scalar()
+        
+        # Get total favorites count
+        total_favorites = self.db.query(func.count(Favorite.id)).filter(
+            Favorite.user_id == user_id
+        ).scalar() or 0
+        
+        # Get unique books reviewed count
+        books_reviewed = self.db.query(func.count(func.distinct(Review.book_id))).filter(
+            Review.user_id == user_id
+        ).scalar() or 0
+        
+        # Get reviews this month count
+        current_month = datetime.utcnow().replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+        reviews_this_month = self.db.query(func.count(Review.id)).filter(
+            and_(
+                Review.user_id == user_id,
+                Review.created_at >= current_month
+            )
+        ).scalar() or 0
+        
+        return UserProfileStats(
+            total_reviews=total_reviews,
+            average_rating_given=float(avg_rating) if avg_rating else None,
+            total_favorites=total_favorites,
+            books_reviewed=books_reviewed,
+            reviews_this_month=reviews_this_month
+        )
+
+    def authenticate_user(self, email: str, password: str) -> Optional[User]:
+        """Authenticate user with email and password"""
+        user = self.get_user_by_email(email)
+        if not user:
+            return None
+        if not verify_password(password, user.hashed_password):
+            return None
+        return user
+
+    def verify_user(self, user_id: int) -> bool:
+        """Mark user as verified"""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return False
+        
+        user.is_verified = True
+        self.db.commit()
+        return True
+
+    def deactivate_user(self, user_id: int) -> bool:
+        """Deactivate a user account"""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return False
+        
+        user.is_active = False
+        self.db.commit()
+        return True
+
+    def reactivate_user(self, user_id: int) -> bool:
+        """Reactivate a user account"""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return False
+        
+        user.is_active = True
+        self.db.commit()
+        return True
+
+    def update_password(self, user_id: int, new_password: str) -> bool:
+        """Update user password"""
+        user = self.get_user_by_id(user_id)
+        if not user:
+            return False
+        
+        user.hashed_password = get_password_hash(new_password)
+        self.db.commit()
         return True

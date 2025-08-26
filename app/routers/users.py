@@ -1,216 +1,169 @@
-from typing import List
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from typing import List
 
-from app.database import get_db
-from app.schemas.auth import UserResponse
-from app.schemas.user import UserUpdate
-from app.services.user_service import UserService
-from app.core.dependencies import get_current_active_user, get_current_verified_user
-from app.models.user import User
+from ..database import get_db
+from ..core.dependencies import get_current_user
+from ..models.user import User
+from ..schemas.user import UserResponse, UserUpdate, UserProfileResponse, UserProfileStats
+from ..schemas.review import ReviewListResponse
+from ..services.user_service import UserService
+from ..services.review_service import ReviewService
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/", response_model=List[UserResponse])
-def get_users(
-    skip: int = Query(0, ge=0, description="Number of users to skip"),
-    limit: int = Query(
-        100, ge=1, le=1000, description="Maximum number of users to return"
-    ),
-    current_user: User = Depends(get_current_verified_user),
-    db: Session = Depends(get_db),
-) -> List[UserResponse]:
-    """
-    Get list of users with pagination.
-    Requires verified user access.
+@router.get("/me/", response_model=UserResponse)
+async def get_current_user_info(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's basic information"""
+    return current_user
 
-    Args:
-        skip: Number of users to skip
-        limit: Maximum number of users to return
-        current_user: Current verified user
-        db: Database session
 
-    Returns:
-        List of users
-    """
+@router.get("/me/profile/", response_model=UserProfileResponse)
+async def get_current_user_profile(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's full profile with statistics"""
     user_service = UserService(db)
-    users = user_service.get_users(skip=skip, limit=limit)
-    return [UserResponse.model_validate(user) for user in users]
+    
+    # Get user profile statistics
+    stats = user_service.get_user_profile_stats(current_user.id)
+    
+    # Create profile response
+    profile_data = {
+        **current_user.__dict__,
+        "stats": stats
+    }
+    
+    return profile_data
 
 
-@router.get("/{user_id}", response_model=UserResponse)
-def get_user_by_id(
-    user_id: int,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-) -> UserResponse:
-    """
-    Get user by ID.
-    Users can only access their own information unless they are verified.
-
-    Args:
-        user_id: User ID to retrieve
-        current_user: Current authenticated user
-        db: Database session
-
-    Returns:
-        User information
-
-    Raises:
-        HTTPException: If user not found or access denied
-    """
+@router.put("/me/", response_model=UserResponse)
+async def update_current_user_profile(
+    user_update: UserUpdate,
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Update current user's profile information"""
     user_service = UserService(db)
-
-    # Users can access their own info, verified users can access others
-    if user_id != current_user.id and not current_user.is_verified:
+    
+    # Check if email is being updated and if it already exists
+    if user_update.email and user_update.email != current_user.email:
+        existing_user = user_service.get_user_by_email(user_update.email)
+        if existing_user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email already registered"
+            )
+    
+    updated_user = user_service.update_user(current_user.id, user_update)
+    if not updated_user:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+    
+    return updated_user
+
+
+@router.get("/me/reviews/", response_model=ReviewListResponse)
+async def get_current_user_reviews(
+    page: int = 1,
+    per_page: int = 10,
+    sort_by: str = "created_at",
+    sort_order: str = "desc",
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's reviews with pagination"""
+    if per_page > 100:
+        per_page = 100
+    
+    review_service = ReviewService(db)
+    
+    try:
+        reviews, total, total_pages = review_service.get_reviews_by_user(
+            user_id=current_user.id,
+            page=page,
+            per_page=per_page,
+            sort_by=sort_by,
+            sort_order=sort_order
+        )
+        
+        return ReviewListResponse(
+            reviews=reviews,
+            total=total,
+            page=page,
+            per_page=per_page,
+            total_pages=total_pages
+        )
+    
+    except ValueError as e:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e)
+        )
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve user reviews"
         )
 
-    user = user_service.get_user_by_id(user_id)
+
+@router.get("/me/stats/", response_model=UserProfileStats)
+async def get_current_user_stats(
+    current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    """Get current user's profile statistics"""
+    user_service = UserService(db)
+    return user_service.get_user_profile_stats(current_user.id)
+
+
+@router.get("/{user_id}/", response_model=UserResponse)
+async def get_user_by_id(
+    user_id: int,
+    db: Session = Depends(get_db)
+):
+    """Get user by ID (public information only)"""
+    user_service = UserService(db)
+    user = user_service.get_user(user_id)
+    
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
         )
+    
+    return user
 
-    return UserResponse.model_validate(user)
 
-
-@router.put("/{user_id}", response_model=UserResponse)
-def update_user(
+@router.get("/{user_id}/profile/", response_model=UserProfileResponse)
+async def get_user_profile_by_id(
     user_id: int,
-    user_data: UserUpdate,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-) -> UserResponse:
-    """
-    Update user information.
-    Users can only update their own information.
-
-    Args:
-        user_id: User ID to update
-        user_data: Updated user data
-        current_user: Current authenticated user
-        db: Database session
-
-    Returns:
-        Updated user information
-
-    Raises:
-        HTTPException: If user not found or access denied
-    """
-    # Users can only update their own information
-    if user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
+    db: Session = Depends(get_db)
+):
+    """Get user's public profile with statistics"""
     user_service = UserService(db)
-    user = user_service.update_user(user_id, user_data)
-
+    user = user_service.get_user(user_id)
+    
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
         )
-
-    return UserResponse.model_validate(user)
-
-
-@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_user(
-    user_id: int,
-    current_user: User = Depends(get_current_active_user),
-    db: Session = Depends(get_db),
-) -> None:
-    """
-    Delete user account (soft delete).
-    Users can only delete their own account.
-
-    Args:
-        user_id: User ID to delete
-        current_user: Current authenticated user
-        db: Database session
-
-    Raises:
-        HTTPException: If user not found or access denied
-    """
-    # Users can only delete their own account
-    if user_id != current_user.id:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
-
-    user_service = UserService(db)
-    deleted = user_service.delete_user(user_id)
-
-    if not deleted:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-
-@router.post("/{user_id}/verify", response_model=UserResponse)
-def verify_user_email(
-    user_id: int,
-    current_user: User = Depends(get_current_verified_user),
-    db: Session = Depends(get_db),
-) -> UserResponse:
-    """
-    Verify a user's email address.
-    Only verified users can verify other users.
-
-    Args:
-        user_id: User ID to verify
-        current_user: Current verified user
-        db: Database session
-
-    Returns:
-        Updated user information
-
-    Raises:
-        HTTPException: If user not found
-    """
-    user_service = UserService(db)
-    verified = user_service.verify_user_email(user_id)
-
-    if not verified:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    user = user_service.get_user_by_id(user_id)
-    return UserResponse.model_validate(user)
-
-
-@router.post("/{user_id}/activate", response_model=UserResponse)
-def activate_user(
-    user_id: int,
-    current_user: User = Depends(get_current_verified_user),
-    db: Session = Depends(get_db),
-) -> UserResponse:
-    """
-    Activate a user account.
-    Only verified users can activate other users.
-
-    Args:
-        user_id: User ID to activate
-        current_user: Current verified user
-        db: Database session
-
-    Returns:
-        Updated user information
-
-    Raises:
-        HTTPException: If user not found
-    """
-    user_service = UserService(db)
-    activated = user_service.activate_user(user_id)
-
-    if not activated:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
-        )
-
-    user = user_service.get_user_by_id(user_id)
-    return UserResponse.model_validate(user)
+    
+    # Get user profile statistics
+    stats = user_service.get_user_profile_stats(user_id)
+    
+    # Create profile response (only public information)
+    profile_data = {
+        **user.__dict__,
+        "stats": stats
+    }
+    
+    return profile_data
