@@ -41,7 +41,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     """Create a test client with database dependency override."""
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from app.routers import auth_router, users_router, books_router
+    from app.routers import auth_router, users_router, books_router, reviews_router
     from app.core.config import settings
 
     # Create a test app without startup events
@@ -65,6 +65,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     test_app.include_router(auth_router, prefix=settings.API_V1_STR)
     test_app.include_router(users_router, prefix=settings.API_V1_STR)
     test_app.include_router(books_router, prefix=settings.API_V1_STR)
+    test_app.include_router(reviews_router, prefix=settings.API_V1_STR)
 
     # Add basic routes
     @test_app.get("/", tags=["Root"])
@@ -135,15 +136,14 @@ def sample_genre(db_session: Session) -> Genre:
 @pytest.fixture
 def sample_book(db_session: Session) -> Book:
     """Create a sample book for testing."""
+    from app.models.book import Book
+    
     book = Book(
-        title="Test Book Title",
-        author="Test Author",
-        description="A test book description",
-        published_year=2023,
-        isbn="9781234567890",
-        cover_url="https://example.com/cover.jpg",
-        average_rating=4.0,
-        total_reviews=5,
+        title="The Great Gatsby",
+        author="F. Scott Fitzgerald",
+        isbn="9780743273565",
+        published_year=1925,
+        description="A classic American novel set in the Jazz Age."
     )
     db_session.add(book)
     db_session.commit()
@@ -299,29 +299,12 @@ def multiple_books(db_session: Session, multiple_genres: list[Genre]) -> list[Bo
 
 
 @pytest.fixture
-def auth_headers(client: TestClient, db_session: Session) -> dict:
-    """Get authentication headers for API requests."""
-    # Create a user for authentication
-    user = User(
-        email="auth@example.com",
-        name="Auth User",
-        hashed_password=get_password_hash("password123"),
-        is_active=True,
-        is_verified=True,
-    )
-    db_session.add(user)
-    db_session.commit()
-
-    # Login to get tokens
-    login_data = {"email": "auth@example.com", "password": "password123"}
-
-    response = client.post("/api/v1/auth/login", json=login_data)
-    assert response.status_code == 200
-
-    tokens = response.json()["tokens"]
-    access_token = tokens["access_token"]
-
-    return {"Authorization": f"Bearer {access_token}"}
+def auth_headers(sample_user: User) -> dict:
+    """Create authentication headers for API testing."""
+    from app.core.security import create_access_token
+    
+    token = create_access_token(subject=str(sample_user.id))
+    return {"Authorization": f"Bearer {token}"}
 
 
 @pytest.fixture
