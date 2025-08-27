@@ -6,6 +6,8 @@ from typing import Optional, Dict, Any
 from datetime import datetime, timedelta
 
 from app.models.user import User
+from app.models.review import Review
+from app.models.favorite import Favorite
 from app.schemas.user import UserCreate, UserUpdate, UserProfileStats
 from app.core.security import get_password_hash, verify_password
 
