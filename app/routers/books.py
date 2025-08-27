@@ -123,6 +123,54 @@ async def search_books(
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
+# Genre endpoints - MOVED BEFORE {book_id} route to prevent route conflicts
+genre_router = APIRouter(prefix="/genres", tags=["genres"])
+
+
+@genre_router.get("/", response_model=List[GenreResponse])
+async def list_genres(
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """Get all available genres."""
+    try:
+        genre_service = GenreService(db)
+        genres = genre_service.get_all_genres()
+
+        return [GenreResponse.model_validate(genre) for genre in genres]
+
+    except Exception as e:
+        logger.error(f"Error listing genres: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+@genre_router.get("/{genre_id}", response_model=GenreResponse)
+async def get_genre(
+    genre_id: int,
+    db: Session = Depends(get_db),
+    current_user: Optional[User] = Depends(get_optional_current_user),
+):
+    """Get a specific genre by ID."""
+    try:
+        genre_service = GenreService(db)
+        genre = genre_service.get_genre_by_id(genre_id)
+
+        if not genre:
+            raise HTTPException(status_code=404, detail="Genre not found")
+
+        return GenreResponse.model_validate(genre)
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting genre {genre_id}: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
+
+
+# Include genre router BEFORE {book_id} route to prevent route conflicts
+router.include_router(genre_router)
+
+
 @router.get("/{book_id}", response_model=BookResponse)
 async def get_book(
     book_id: int,
@@ -220,51 +268,3 @@ async def delete_book(
     except Exception as e:
         logger.error(f"Error deleting book {book_id}: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
-
-
-# Genre endpoints
-genre_router = APIRouter(prefix="/genres", tags=["genres"])
-
-
-@genre_router.get("/", response_model=List[GenreResponse])
-async def list_genres(
-    db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
-):
-    """Get all available genres."""
-    try:
-        genre_service = GenreService(db)
-        genres = genre_service.get_all_genres()
-
-        return [GenreResponse.model_validate(genre) for genre in genres]
-
-    except Exception as e:
-        logger.error(f"Error listing genres: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-@genre_router.get("/{genre_id}", response_model=GenreResponse)
-async def get_genre(
-    genre_id: int,
-    db: Session = Depends(get_db),
-    current_user: Optional[User] = Depends(get_optional_current_user),
-):
-    """Get a specific genre by ID."""
-    try:
-        genre_service = GenreService(db)
-        genre = genre_service.get_genre_by_id(genre_id)
-
-        if not genre:
-            raise HTTPException(status_code=404, detail="Genre not found")
-
-        return GenreResponse.model_validate(genre)
-
-    except HTTPException:
-        raise
-    except Exception as e:
-        logger.error(f"Error getting genre {genre_id}: {e}")
-        raise HTTPException(status_code=500, detail="Internal server error")
-
-
-# Include genre router in the main books router
-router.include_router(genre_router)
