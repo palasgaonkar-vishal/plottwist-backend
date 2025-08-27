@@ -151,7 +151,7 @@ class RecommendationService:
                 .outerjoin(Review, Book.id == Review.book_id)
                 .outerjoin(Favorite, Book.id == Favorite.book_id)
                 .group_by(Book.id)
-                .having(func.count(Review.id) >= 5)  # Minimum 5 reviews for popularity
+                .having(func.count(Review.id) >= 1)  # FIXED: Reduced from 5 to 1 review minimum
             )
 
             if params.min_rating:
