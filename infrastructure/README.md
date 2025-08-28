@@ -12,15 +12,16 @@ infrastructure/
 │   ├── variables.tf        # Input variables
 │   ├── outputs.tf          # Output values
 │   └── user_data.sh        # EC2 initialization script
-├── github-actions/         # CI/CD Pipeline configurations
-│   ├── backend-cicd.yml    # Backend deployment pipeline
-│   └── frontend-cicd.yml   # Frontend deployment pipeline
 ├── docker/                 # Container configurations
 │   └── production.yml      # Production Docker Compose
 ├── monitoring/             # Health checks and monitoring
 │   └── health-check.sh     # Production health check script
 └── README.md              # This file
 ```
+
+**Note**: CI/CD pipelines are managed through GitHub Actions workflows in the respective repository `.github/workflows/` directories:
+- Backend CI/CD: `plottwist-backend/.github/workflows/ci-cd.yml`
+- Frontend CI/CD: `plottwist-frontend/.github/workflows/ci-cd.yml`
 
 ## 🚀 Quick Start
 
