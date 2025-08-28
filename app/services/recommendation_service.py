@@ -76,7 +76,7 @@ class RecommendationService:
                 .outerjoin(Review, Book.id == Review.book_id)
                 .filter(Genre.id.in_(top_genre_ids))
                 .group_by(Book.id)
-                .having(func.count(Review.id) >= 3)  # Minimum 3 reviews for reliability
+                .having(func.count(Review.id) >= 1)  # FIXED: Reduced from 3 to 1 review minimum for seed data compatibility
             )
 
             if params.min_rating:
