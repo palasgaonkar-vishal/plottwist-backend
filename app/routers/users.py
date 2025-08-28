@@ -6,7 +6,7 @@ from ..database import get_db
 from ..core.dependencies import get_current_user
 from ..models.user import User
 from ..schemas.user import UserResponse, UserUpdate, UserProfileResponse, UserProfileStats
-from ..schemas.review import ReviewListResponse
+from ..schemas.review import ReviewListResponse, ReviewResponse
 from ..services.user_service import UserService
 from ..services.review_service import ReviewService
 
@@ -94,8 +94,17 @@ async def get_current_user_reviews(
             sort_order=sort_order
         )
         
+        # Build response with user and book details
+        review_responses = []
+        for review in reviews:
+            review_response = ReviewResponse.from_orm(review)
+            review_response.user_name = current_user.name
+            if review.book:
+                review_response.book_title = review.book.title
+            review_responses.append(review_response)
+        
         return ReviewListResponse(
-            reviews=reviews,
+            reviews=review_responses,
             total=total,
             page=page,
             per_page=per_page,

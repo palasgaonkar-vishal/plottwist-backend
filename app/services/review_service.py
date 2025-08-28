@@ -8,6 +8,7 @@ from typing import List, Optional, Tuple, Dict
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from fastapi import HTTPException, status
+from sqlalchemy.orm import joinedload
 
 from app.models.review import Review
 from app.models.book import Book
@@ -164,7 +165,13 @@ class ReviewService:
         Returns:
             Tuple of (reviews list, total count, total pages)
         """
-        query = self.db.query(Review).filter(Review.user_id == user_id)
+        from ..models.book import Book
+        
+        # Include joins for book and user information
+        query = self.db.query(Review).options(
+            joinedload(Review.book),
+            joinedload(Review.user)
+        ).filter(Review.user_id == user_id)
         
         # Apply sorting
         if sort_by == "rating":
