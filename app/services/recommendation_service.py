@@ -260,6 +260,9 @@ class RecommendationService:
         """
         Create recommendation feedback for analytics.
         """
+        from datetime import datetime
+        from sqlalchemy import text
+        
         feedback = RecommendationFeedback(
             user_id=user_id,
             book_id=feedback_data.book_id,
@@ -270,7 +273,17 @@ class RecommendationService:
         
         self.db.add(feedback)
         self.db.commit()
-        self.db.refresh(feedback)
+        
+        # Use SQLAlchemy text() for the raw query
+        latest_id_result = self.db.execute(
+            text("SELECT id, created_at FROM recommendation_feedback WHERE user_id = :user_id AND book_id = :book_id ORDER BY id DESC LIMIT 1"),
+            {"user_id": user_id, "book_id": feedback_data.book_id}
+        ).fetchone()
+        
+        if latest_id_result:
+            feedback.id = latest_id_result[0]
+            feedback.created_at = latest_id_result[1]
+        
         return feedback
 
     def get_recommendation_stats(
