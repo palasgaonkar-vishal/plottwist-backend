@@ -147,8 +147,10 @@ class ReviewService:
         self, 
         user_id: int, 
         page: int = 1, 
-        per_page: int = 10
-    ) -> Tuple[List[Review], int]:
+        per_page: int = 10,
+        sort_by: str = "created_at",
+        sort_order: str = "desc"
+    ) -> Tuple[List[Review], int, int]:
         """
         Get paginated reviews by a specific user.
         
@@ -156,21 +158,38 @@ class ReviewService:
             user_id: User ID
             page: Page number (1-based)
             per_page: Number of reviews per page
+            sort_by: Field to sort by (created_at, rating, updated_at)
+            sort_order: Sort order (asc, desc)
             
         Returns:
-            Tuple of (reviews list, total count)
+            Tuple of (reviews list, total count, total pages)
         """
         query = self.db.query(Review).filter(Review.user_id == user_id)
-        query = query.order_by(Review.created_at.desc())
+        
+        # Apply sorting
+        if sort_by == "rating":
+            sort_field = Review.rating
+        elif sort_by == "updated_at":
+            sort_field = Review.updated_at
+        else:
+            sort_field = Review.created_at
+        
+        if sort_order.lower() == "asc":
+            query = query.order_by(sort_field.asc())
+        else:
+            query = query.order_by(sort_field.desc())
         
         # Get total count
         total = query.count()
+        
+        # Calculate total pages
+        total_pages = (total + per_page - 1) // per_page
         
         # Apply pagination
         offset = (page - 1) * per_page
         reviews = query.offset(offset).limit(per_page).all()
         
-        return reviews, total
+        return reviews, total, total_pages
     
     def update_review(self, review_id: int, review_data: ReviewUpdate, user_id: int) -> Review:
         """
