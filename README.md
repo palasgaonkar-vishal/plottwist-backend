@@ -160,50 +160,27 @@ Key test areas:
 
 ## 🚀 Production Deployment
 
-### AWS EC2 Deployment
-The backend is configured for production deployment on AWS EC2 using our infrastructure automation:
+The backend repository includes complete infrastructure-as-code for production deployment:
 
-1. **Infrastructure Setup**
-   ```bash
-   cd ../infrastructure/terraform/
-   terraform init
-   terraform apply
-   ```
+### Infrastructure Directory
+- **Location**: `./infrastructure/`
+- **Terraform Scripts**: Complete AWS EC2 infrastructure setup
+- **Docker Configuration**: Production-ready container orchestration
+- **GitHub Actions**: Automated CI/CD pipelines
+- **Health Monitoring**: Production health checks and monitoring
 
-2. **CI/CD Pipeline**
-   - GitHub Actions automatically deploy on push to `main`
-   - Includes testing, security scanning, and health checks
-   - See `.github/workflows/` for pipeline configuration
-
-3. **Manual Deployment**
-   ```bash
-   # SSH to production server
-   ssh ubuntu@your-ec2-instance
-   
-   # Run deployment script
-   sudo -u ubuntu /opt/plottwist/deploy.sh
-   ```
-
-### Docker Deployment
+### Quick Deployment
 ```bash
-# Build Docker image
-docker build -t plottwist-backend .
+# Navigate to infrastructure directory
+cd infrastructure/terraform/
 
-# Run with Docker Compose
-docker-compose -f docker-compose.prod.yml up -d
+# Initialize and deploy
+terraform init
+terraform plan -var="public_key=$(cat ~/.ssh/id_rsa.pub)"
+terraform apply
 ```
 
-### Environment Configuration
-
-#### Production Environment Variables
-```bash
-DATABASE_URL=postgresql://plottwist:password@localhost:5432/plottwist
-JWT_SECRET_KEY=your-secure-jwt-secret-key
-ENVIRONMENT=production
-FRONTEND_URL=https://yourdomain.com
-BACKEND_URL=https://api.yourdomain.com
-ALLOWED_HOSTS=api.yourdomain.com,yourdomain.com
-```
+For detailed deployment instructions, see: [`infrastructure/README.md`](./infrastructure/README.md)
 
 ## 📊 Performance & Monitoring
 
