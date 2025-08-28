@@ -162,7 +162,7 @@ class TestReviewService:
             )
             review_service.create_review(review_data, sample_user.id)
         
-        reviews, total = review_service.get_reviews_by_user(sample_user.id, page=1, per_page=10)
+        reviews, total, _ = review_service.get_reviews_by_user(sample_user.id, page=1, per_page=10)
         
         assert len(reviews) == 3
         assert total == 3

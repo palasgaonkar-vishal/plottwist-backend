@@ -223,7 +223,7 @@ async def get_my_reviews(
     """Get the current user's reviews."""
     try:
         review_service = ReviewService(db)
-        reviews, total = review_service.get_reviews_by_user(
+        reviews, total, total_pages = review_service.get_reviews_by_user(
             user_id=current_user.id,
             page=page,
             per_page=per_page
@@ -237,8 +237,6 @@ async def get_my_reviews(
             if review.book:
                 review_response.book_title = review.book.title
             review_responses.append(review_response)
-        
-        total_pages = (total + per_page - 1) // per_page
         
         return ReviewListResponse(
             reviews=review_responses,

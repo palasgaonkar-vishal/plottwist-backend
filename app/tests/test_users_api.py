@@ -251,10 +251,10 @@ class TestFavoritesAPI:
         data = response.json()
         assert data["is_favorite"] is False
 
-    def test_get_my_favorites(self, client: TestClient, auth_headers, sample_user, sample_books, db_session):
+    def test_get_my_favorites(self, client: TestClient, auth_headers, sample_user, multiple_books, db_session):
         """Test getting current user's favorites"""
         # Add some favorites
-        for book in sample_books[:3]:
+        for book in multiple_books[:3]:
             favorite = Favorite(user_id=sample_user.id, book_id=book.id)
             db_session.add(favorite)
         db_session.commit()
@@ -279,10 +279,10 @@ class TestFavoritesAPI:
         assert data["page"] == 1
         assert data["per_page"] == 5
 
-    def test_get_my_favorites_count(self, client: TestClient, auth_headers, sample_user, sample_books, db_session):
+    def test_get_my_favorites_count(self, client: TestClient, auth_headers, sample_user, multiple_books, db_session):
         """Test getting count of user's favorites"""
         # Add some favorites
-        for book in sample_books[:2]:
+        for book in multiple_books[:2]:
             favorite = Favorite(user_id=sample_user.id, book_id=book.id)
             db_session.add(favorite)
         db_session.commit()
@@ -293,10 +293,10 @@ class TestFavoritesAPI:
         data = response.json()
         assert data["count"] == 2
 
-    def test_get_book_favorites_count(self, client: TestClient, sample_book, sample_users, db_session):
+    def test_get_book_favorites_count(self, client: TestClient, sample_book, multiple_users, db_session):
         """Test getting count of users who favorited a book"""
         # Add favorites from multiple users
-        for user in sample_users[:2]:
+        for user in multiple_users[:2]:
             favorite = Favorite(user_id=user.id, book_id=sample_book.id)
             db_session.add(favorite)
         db_session.commit()
@@ -307,12 +307,12 @@ class TestFavoritesAPI:
         data = response.json()
         assert data["count"] == 2
 
-    def test_get_popular_books(self, client: TestClient, sample_books, sample_users, db_session):
+    def test_get_popular_books(self, client: TestClient, multiple_books, multiple_users, db_session):
         """Test getting most favorited books"""
         # Add favorites for different books
-        for i, book in enumerate(sample_books[:2]):
+        for i, book in enumerate(multiple_books[:2]):
             for j in range(i + 1):  # Different amounts of favorites
-                favorite = Favorite(user_id=sample_users[j].id, book_id=book.id)
+                favorite = Favorite(user_id=multiple_users[j].id, book_id=book.id)
                 db_session.add(favorite)
         db_session.commit()
         

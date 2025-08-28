@@ -13,17 +13,17 @@ from app.models.favorite import Favorite
 
 
 class TestRecommendationService:
-    def test_get_content_based_recommendations_with_favorites(self, db_session, sample_user, sample_books, sample_genres):
+    def test_get_content_based_recommendations_with_favorites(self, db_session, sample_user, multiple_books, sample_genres):
         """Test content-based recommendations for user with favorites"""
         recommendation_service = RecommendationService(db_session)
         
         # Create user favorites with specific genres
-        favorite1 = Favorite(user_id=sample_user.id, book_id=sample_books[0].id)
-        favorite2 = Favorite(user_id=sample_user.id, book_id=sample_books[1].id)
+        favorite1 = Favorite(user_id=sample_user.id, book_id=multiple_books[0].id)
+        favorite2 = Favorite(user_id=sample_user.id, book_id=multiple_books[1].id)
         db_session.add_all([favorite1, favorite2])
         
         # Add reviews to ensure minimum review count
-        for i, book in enumerate(sample_books[:5]):
+        for i, book in enumerate(multiple_books[:5]):
             for j in range(5):  # 5 reviews per book
                 review = Review(
                     user_id=sample_user.id + j + 1,  # Different users
@@ -44,17 +44,17 @@ class TestRecommendationService:
         
         assert len(recommendations) > 0
         for rec in recommendations:
-            assert rec.book.id not in [sample_books[0].id, sample_books[1].id]  # Excluded favorites
+            assert rec.book.id not in [multiple_books[0].id, multiple_books[1].id]  # Excluded favorites
             assert rec.score > 0
             assert rec.reason is not None
             assert rec.recommendation_type == RecommendationType.CONTENT_BASED
 
-    def test_get_content_based_recommendations_no_favorites(self, db_session, sample_user, sample_books):
+    def test_get_content_based_recommendations_no_favorites(self, db_session, sample_user, multiple_books):
         """Test content-based recommendations fallback when user has no favorites"""
         recommendation_service = RecommendationService(db_session)
         
         # Add some reviews to books for fallback
-        for book in sample_books[:3]:
+        for book in multiple_books[:3]:
             review = Review(
                 user_id=sample_user.id + 1,  # Different user
                 book_id=book.id,
@@ -77,12 +77,12 @@ class TestRecommendationService:
         for rec in recommendations:
             assert rec.recommendation_type == RecommendationType.CONTENT_BASED
 
-    def test_get_popularity_based_recommendations(self, db_session, sample_user, sample_books):
+    def test_get_popularity_based_recommendations(self, db_session, sample_user, multiple_books):
         """Test popularity-based recommendations"""
         recommendation_service = RecommendationService(db_session)
         
         # Create reviews and favorites to establish popularity
-        for i, book in enumerate(sample_books[:3]):
+        for i, book in enumerate(multiple_books[:3]):
             # Add multiple reviews
             for j in range(5 + i):  # Varying review counts
                 review = Review(
@@ -152,26 +152,26 @@ class TestRecommendationService:
         assert isinstance(stats, list)
         assert len(stats) == 0
 
-    def test_get_recommendation_stats_with_data(self, db_session, sample_user, sample_books):
+    def test_get_recommendation_stats_with_data(self, db_session, sample_user, multiple_books):
         """Test getting recommendation stats with feedback data"""
         recommendation_service = RecommendationService(db_session)
         
         # Create some feedback
         feedback1 = RecommendationFeedback(
             user_id=sample_user.id,
-            book_id=sample_books[0].id,
+            book_id=multiple_books[0].id,
             recommendation_type=RecommendationType.CONTENT_BASED,
             is_positive=True
         )
         feedback2 = RecommendationFeedback(
             user_id=sample_user.id,
-            book_id=sample_books[1].id,
+            book_id=multiple_books[1].id,
             recommendation_type=RecommendationType.CONTENT_BASED,
             is_positive=False
         )
         feedback3 = RecommendationFeedback(
             user_id=sample_user.id,
-            book_id=sample_books[2].id,
+            book_id=multiple_books[2].id,
             recommendation_type=RecommendationType.POPULARITY_BASED,
             is_positive=True
         )
@@ -210,18 +210,18 @@ class TestRecommendationService:
         
         assert isinstance(recommendations, list)
 
-    def test_exclude_user_books_parameter(self, db_session, sample_user, sample_books):
+    def test_exclude_user_books_parameter(self, db_session, sample_user, multiple_books):
         """Test that exclude_user_books parameter works correctly"""
         recommendation_service = RecommendationService(db_session)
         
         # User favorites a book
-        favorite = Favorite(user_id=sample_user.id, book_id=sample_books[0].id)
+        favorite = Favorite(user_id=sample_user.id, book_id=multiple_books[0].id)
         db_session.add(favorite)
         
         # User reviews a book
         review = Review(
             user_id=sample_user.id,
-            book_id=sample_books[1].id,
+            book_id=multiple_books[1].id,
             rating=4.0,
             title="My review",
             content="Good book"
@@ -244,16 +244,16 @@ class TestRecommendationService:
         )
         
         # With exclusion, user's books should not be in recommendations
-        user_book_ids = {sample_books[0].id, sample_books[1].id}
+        user_book_ids = {multiple_books[0].id, multiple_books[1].id}
         for rec in recommendations_exclude:
             assert rec.book.id not in user_book_ids
 
-    def test_min_rating_filter(self, db_session, sample_user, sample_books):
+    def test_min_rating_filter(self, db_session, sample_user, multiple_books):
         """Test minimum rating filter"""
         recommendation_service = RecommendationService(db_session)
         
         # Add reviews with different ratings
-        for i, book in enumerate(sample_books[:3]):
+        for i, book in enumerate(multiple_books[:3]):
             for j in range(5):
                 review = Review(
                     user_id=sample_user.id + j + 1,
@@ -299,14 +299,14 @@ class TestRecommendationService:
         # Should not raise exceptions
         recommendation_service.invalidate_user_cache(sample_user.id)
 
-    def test_fallback_recommendations_on_error(self, db_session, sample_user, sample_books):
+    def test_fallback_recommendations_on_error(self, db_session, sample_user, multiple_books):
         """Test that fallback recommendations are provided when main algorithm fails"""
         recommendation_service = RecommendationService(db_session)
         
         # Add a basic book with review for fallback
         review = Review(
             user_id=sample_user.id + 1,
-            book_id=sample_books[0].id,
+            book_id=multiple_books[0].id,
             rating=4.0,
             title="Good book",
             content="Really good"
@@ -325,5 +325,5 @@ class TestRecommendationService:
         
         assert isinstance(recommendations, list)
         # Should have at least some recommendations if books exist
-        if sample_books:
+        if multiple_books:
             assert len(recommendations) >= 0 

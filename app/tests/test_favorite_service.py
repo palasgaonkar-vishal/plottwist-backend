@@ -147,12 +147,12 @@ class TestFavoriteService:
         
         assert is_favorite is False
 
-    def test_get_user_favorites_with_data(self, db_session, sample_user, sample_books):
+    def test_get_user_favorites_with_data(self, db_session, sample_user, multiple_books):
         """Test getting user's favorites with pagination"""
         favorite_service = FavoriteService(db_session)
         
         # Add multiple favorites
-        for i, book in enumerate(sample_books[:3]):
+        for i, book in enumerate(multiple_books[:3]):
             favorite = Favorite(user_id=sample_user.id, book_id=book.id)
             db_session.add(favorite)
         db_session.commit()
@@ -173,12 +173,12 @@ class TestFavoriteService:
             assert favorite.book is not None
             assert favorite.book.title is not None
 
-    def test_get_user_favorites_pagination(self, db_session, sample_user, sample_books):
+    def test_get_user_favorites_pagination(self, db_session, sample_user, multiple_books):
         """Test favorites pagination"""
         favorite_service = FavoriteService(db_session)
         
         # Add 5 favorites
-        for book in sample_books[:5]:
+        for book in multiple_books[:5]:
             favorite = Favorite(user_id=sample_user.id, book_id=book.id)
             db_session.add(favorite)
         db_session.commit()
@@ -219,7 +219,7 @@ class TestFavoriteService:
         assert total == 0
         assert total_pages == 1
 
-    def test_get_user_favorites_count(self, db_session, sample_user, sample_books):
+    def test_get_user_favorites_count(self, db_session, sample_user, multiple_books):
         """Test getting count of user's favorites"""
         favorite_service = FavoriteService(db_session)
         
@@ -228,7 +228,7 @@ class TestFavoriteService:
         assert count == 0
         
         # Add favorites
-        for book in sample_books[:3]:
+        for book in multiple_books[:3]:
             favorite = Favorite(user_id=sample_user.id, book_id=book.id)
             db_session.add(favorite)
         db_session.commit()
@@ -236,7 +236,7 @@ class TestFavoriteService:
         count = favorite_service.get_user_favorites_count(sample_user.id)
         assert count == 3
 
-    def test_get_book_favorites_count(self, db_session, sample_users, sample_book):
+    def test_get_book_favorites_count(self, db_session, multiple_users, sample_book):
         """Test getting count of users who favorited a book"""
         favorite_service = FavoriteService(db_session)
         
@@ -245,7 +245,7 @@ class TestFavoriteService:
         assert count == 0
         
         # Add favorites from multiple users
-        for user in sample_users[:2]:
+        for user in multiple_users[:2]:
             favorite = Favorite(user_id=user.id, book_id=sample_book.id)
             db_session.add(favorite)
         db_session.commit()
@@ -253,22 +253,22 @@ class TestFavoriteService:
         count = favorite_service.get_book_favorites_count(sample_book.id)
         assert count == 2
 
-    def test_get_popular_books(self, db_session, sample_users, sample_books):
+    def test_get_popular_books(self, db_session, multiple_users, multiple_books):
         """Test getting most favorited books"""
         favorite_service = FavoriteService(db_session)
         
         # Book 1: 3 favorites
-        for user in sample_users[:3]:
-            favorite = Favorite(user_id=user.id, book_id=sample_books[0].id)
+        for user in multiple_users[:3]:
+            favorite = Favorite(user_id=user.id, book_id=multiple_books[0].id)
             db_session.add(favorite)
         
         # Book 2: 2 favorites
-        for user in sample_users[:2]:
-            favorite = Favorite(user_id=user.id, book_id=sample_books[1].id)
+        for user in multiple_users[:2]:
+            favorite = Favorite(user_id=user.id, book_id=multiple_books[1].id)
             db_session.add(favorite)
         
         # Book 3: 1 favorite
-        favorite = Favorite(user_id=sample_users[0].id, book_id=sample_books[2].id)
+        favorite = Favorite(user_id=multiple_users[0].id, book_id=multiple_books[2].id)
         db_session.add(favorite)
         
         db_session.commit()
@@ -285,17 +285,17 @@ class TestFavoriteService:
         assert count1 == 3
         assert count2 == 2
         assert count3 == 1
-        assert book1.id == sample_books[0].id
-        assert book2.id == sample_books[1].id
-        assert book3.id == sample_books[2].id
+        assert book1.id == multiple_books[0].id
+        assert book2.id == multiple_books[1].id
+        assert book3.id == multiple_books[2].id
 
-    def test_get_popular_books_limit(self, db_session, sample_users, sample_books):
+    def test_get_popular_books_limit(self, db_session, multiple_users, multiple_books):
         """Test popular books with limit"""
         favorite_service = FavoriteService(db_session)
         
         # Add favorites for 3 books
-        for i, book in enumerate(sample_books[:3]):
-            for user in sample_users[:i+1]:  # Different amounts of favorites
+        for i, book in enumerate(multiple_books[:3]):
+            for user in multiple_users[:i+1]:  # Different amounts of favorites
                 favorite = Favorite(user_id=user.id, book_id=book.id)
                 db_session.add(favorite)
         db_session.commit()

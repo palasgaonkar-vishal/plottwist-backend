@@ -340,7 +340,7 @@ class ReviewService:
             User review statistics
         """
         # Get user's reviews
-        reviews, total_reviews = self.get_reviews_by_user(user_id, page=1, per_page=1000)
+        reviews, total_reviews, _ = self.get_reviews_by_user(user_id, page=1, per_page=1000)
         
         # Calculate average rating given by user
         if total_reviews > 0:

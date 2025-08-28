@@ -111,10 +111,10 @@ class TestUserService:
     def test_authenticate_user_success(self, db_session, sample_user):
         """Test successful user authentication"""
         user_service = UserService(db_session)
-        
-        # The sample_user fixture should have password "testpassword"
-        authenticated_user = user_service.authenticate_user(sample_user.email, "testpassword")
-        
+
+        # The sample_user fixture has password "password123"
+        authenticated_user = user_service.authenticate_user(sample_user.email, "password123")
+
         assert authenticated_user is not None
         assert authenticated_user.id == sample_user.id
         assert authenticated_user.email == sample_user.email
@@ -138,12 +138,16 @@ class TestUserService:
     def test_verify_user(self, db_session, sample_user):
         """Test user email verification"""
         user_service = UserService(db_session)
+
+        # Make user unverified first (since sample_user fixture sets is_verified=True)
+        sample_user.is_verified = False
+        db_session.commit()
         
         # User should start unverified
         assert not sample_user.is_verified
-        
+
         success = user_service.verify_user(sample_user.id)
-        
+
         assert success is True
         db_session.refresh(sample_user)
         assert sample_user.is_verified is True

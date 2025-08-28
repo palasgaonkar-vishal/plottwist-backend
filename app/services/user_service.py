@@ -30,6 +30,18 @@ class UserService:
         """
         return self.db.query(User).filter(User.id == user_id).first()
 
+    def get_user(self, user_id: int) -> Optional[User]:
+        """
+        Get user by ID (alias for get_user_by_id for backward compatibility).
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            User if found, None otherwise
+        """
+        return self.get_user_by_id(user_id)
+
     def get_user_by_email(self, email: str) -> Optional[User]:
         """
         Get user by email address.
