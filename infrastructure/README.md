@@ -137,20 +137,20 @@ ENVIRONMENT=production
 
 ## 🔄 CI/CD Pipeline
 
-### Backend Pipeline
-1. **Test Phase**: Unit tests, linting, type checking
-2. **Security**: Bandit scan, dependency check
-3. **Build**: Docker image creation
-4. **Deploy**: Automated deployment to EC2
-5. **Health Check**: Verify deployment success
+The CI/CD pipelines are configured and managed in the respective repository workflows:
 
-### Frontend Pipeline
-1. **Test Phase**: Unit tests, linting, type checking
-2. **Security**: npm audit, Snyk scan
-3. **Build**: Production React build
-4. **Performance**: Lighthouse audit
-5. **Deploy**: Automated deployment to EC2
-6. **Monitor**: Performance monitoring
+### Backend Pipeline
+- **Location**: `plottwist-backend/.github/workflows/ci-cd.yml`
+- **Features**: Testing, security scanning, linting, coverage reporting
+- **Triggers**: Push to main/develop branches, pull requests
+
+### Frontend Pipeline  
+- **Location**: `plottwist-frontend/.github/workflows/ci-cd.yml`
+- **Features**: Testing, linting, building, security auditing
+- **Triggers**: Push to main/develop branches, pull requests
+
+### Pipeline Integration with Infrastructure
+Both pipelines can be extended to include automatic deployment to the infrastructure created by these Terraform scripts. The infrastructure provides the target environment for deployment.
 
 ## 📊 Monitoring & Health Checks
 

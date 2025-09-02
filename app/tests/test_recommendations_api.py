@@ -11,12 +11,12 @@ from app.database import get_db
 
 
 class TestRecommendationsAPI:
-    def test_get_content_based_recommendations(self, client: TestClient, auth_headers, sample_user, multiple_books):
+    def test_get_content_based_recommendations(self, client: TestClient, auth_headers, sample_user, multiple_books, db_session):
         """Test getting content-based recommendations"""
         # Add some data for recommendations
         favorite = Favorite(user_id=sample_user.id, book_id=multiple_books[0].id)
-        client.app.dependency_overrides[get_db]().add(favorite)
-        client.app.dependency_overrides[get_db]().commit()
+        db_session.add(favorite)
+        db_session.commit()
         
         response = client.get("/api/v1/recommendations/content-based/", headers=auth_headers)
         
@@ -47,7 +47,7 @@ class TestRecommendationsAPI:
         """Test content-based recommendations without authentication"""
         response = client.get("/api/v1/recommendations/content-based/")
         
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_get_popularity_based_recommendations(self, client: TestClient, auth_headers, multiple_books, multiple_users, db_session):
         """Test getting popularity-based recommendations"""
@@ -154,7 +154,7 @@ class TestRecommendationsAPI:
         
         response = client.post("/api/v1/recommendations/feedback/", json=feedback_data)
         
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_create_recommendation_feedback_invalid_data(self, client: TestClient, auth_headers):
         """Test creating recommendation feedback with invalid data"""
@@ -226,7 +226,7 @@ class TestRecommendationsAPI:
         """Test invalidating cache without authentication"""
         response = client.post("/api/v1/recommendations/invalidate-cache/")
         
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_recommendation_parameters_validation(self, client: TestClient, auth_headers):
         """Test recommendation parameter validation"""

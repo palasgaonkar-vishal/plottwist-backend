@@ -41,7 +41,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     """Create a test client with database dependency override."""
     from fastapi import FastAPI
     from fastapi.middleware.cors import CORSMiddleware
-    from app.routers import auth_router, users_router, books_router, reviews_router, favorites_router, recommendations_router
+    from app.routers import auth_router, users_router, books_router, reviews_router
     from app.core.config import settings
 
     # Create a test app without startup events
@@ -66,8 +66,7 @@ def client(db_session: Session) -> Generator[TestClient, None, None]:
     test_app.include_router(users_router, prefix=settings.API_V1_STR)
     test_app.include_router(books_router, prefix=settings.API_V1_STR)
     test_app.include_router(reviews_router, prefix=settings.API_V1_STR)
-    test_app.include_router(favorites_router, prefix=settings.API_V1_STR)
-    test_app.include_router(recommendations_router, prefix=settings.API_V1_STR)
+
     # Add basic routes
     @test_app.get("/", tags=["Root"])
     async def root():

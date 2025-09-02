@@ -266,7 +266,7 @@ class RecommendationService:
         feedback = RecommendationFeedback(
             user_id=user_id,
             book_id=feedback_data.book_id,
-            recommendation_type=feedback_data.recommendation_type,
+            recommendation_type=RecommendationType(feedback_data.recommendation_type.value),
             is_positive=feedback_data.is_positive,
             context_data=feedback_data.context_data
         )

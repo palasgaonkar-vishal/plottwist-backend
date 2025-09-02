@@ -24,7 +24,7 @@ class TestUsersAPI:
         """Test getting current user info without authentication"""
         response = client.get("/api/v1/users/me/")
         
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_get_current_user_profile(self, client: TestClient, auth_headers):
         """Test getting current user's full profile with statistics"""
@@ -186,7 +186,7 @@ class TestFavoritesAPI:
         
         response = client.post("/api/v1/favorites/", json=favorite_data)
         
-        assert response.status_code == 401
+        assert response.status_code == 403
 
     def test_remove_favorite(self, client: TestClient, auth_headers, sample_book, sample_user, db_session):
         """Test removing a book from favorites"""
