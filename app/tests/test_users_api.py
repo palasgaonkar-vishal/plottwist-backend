@@ -60,14 +60,16 @@ class TestUsersAPI:
         data = response.json()
         assert data["name"] == "Updated Name"
 
-    def test_update_profile_with_existing_email(self, client: TestClient, auth_headers, sample_user):
+    def test_update_profile_with_existing_email(self, client: TestClient, auth_headers, sample_user, db_session):
         """Test updating profile with email that already exists"""
-        # Create another user
+        # Create another user in the database
         another_user = User(
             email="another@example.com",
             name="Another User",
             hashed_password="hashedpassword"
         )
+        db_session.add(another_user)
+        db_session.commit()
         
         update_data = {
             "email": "another@example.com"  # This email should already exist

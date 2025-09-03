@@ -13,7 +13,7 @@ from app.models.favorite import Favorite
 
 
 class TestRecommendationService:
-    def test_get_content_based_recommendations_with_favorites(self, db_session, sample_user, multiple_books, sample_genres):
+    def test_get_content_based_recommendations_with_favorites(self, db_session, sample_user, multiple_books, sample_genre):
         """Test content-based recommendations for user with favorites"""
         recommendation_service = RecommendationService(db_session)
         
@@ -47,7 +47,7 @@ class TestRecommendationService:
             assert rec.book.id not in [multiple_books[0].id, multiple_books[1].id]  # Excluded favorites
             assert rec.score > 0
             assert rec.reason is not None
-            assert rec.recommendation_type == RecommendationType.CONTENT_BASED
+            assert rec.recommendation_type.value == RecommendationType.CONTENT_BASED.value
 
     def test_get_content_based_recommendations_no_favorites(self, db_session, sample_user, multiple_books):
         """Test content-based recommendations fallback when user has no favorites"""
@@ -75,7 +75,7 @@ class TestRecommendationService:
         # Should return fallback recommendations
         assert len(recommendations) >= 0
         for rec in recommendations:
-            assert rec.recommendation_type == RecommendationType.CONTENT_BASED
+            assert rec.recommendation_type.value == RecommendationType.CONTENT_BASED.value
 
     def test_get_popularity_based_recommendations(self, db_session, sample_user, multiple_books):
         """Test popularity-based recommendations"""
@@ -116,7 +116,7 @@ class TestRecommendationService:
             assert recommendations[i-1].score >= recommendations[i].score
         
         for rec in recommendations:
-            assert rec.recommendation_type == RecommendationType.POPULARITY_BASED
+            assert rec.recommendation_type.value == RecommendationType.POPULARITY_BASED.value
             assert "Highly rated" in rec.reason or "Popular" in rec.reason
 
     def test_create_recommendation_feedback(self, db_session, sample_user, sample_book):
@@ -184,7 +184,7 @@ class TestRecommendationService:
         assert len(stats) == 2  # Two recommendation types
         
         # Find content-based stats
-        content_stats = next((s for s in stats if s.recommendation_type == RecommendationType.CONTENT_BASED), None)
+        content_stats = next((s for s in stats if s.recommendation_type.value == RecommendationType.CONTENT_BASED.value), None)
         assert content_stats is not None
         assert content_stats.total_feedback == 2
         assert content_stats.positive_feedback == 1
